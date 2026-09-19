@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="家族ボード">
+<meta name="format-detection" content="telephone=no">
+<title>家族ボード</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap">
+<style>
+  /* ===== Tokens：单一深色风格 ===== */
+  :root {
+    --ground:#0F1113; --surface:#181B1E; --line:#2A2E31;
+    --ink:#EEEAE3; --ink-2:#9A9C9B; --ink-3:#5F6466; --brass:#D8B67A;
+    --f-num:"Jost","Helvetica Neue",Arial,sans-serif;
+    --f-txt:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  }
+  /* 兼容 iOS 12 Safari：不使用 flex 的 gap / inset / aspect-ratio 等新属性 */
+  html, body { height:100%; margin:0; background:var(--ground); }
+  body { overflow:hidden; color:var(--ink); font-family:var(--f-txt); font-weight:400;
+         -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; touch-action:manipulation; }
+
+  /* 9:16 固定舞台 1080×1920，整体等比缩放 */
+  #stage { position:absolute; left:50%; top:50%; width:1080px; height:1920px; box-sizing:border-box;
+           padding:48px 68px 40px; display:flex; flex-direction:column; transform-origin:center center; }
+  #dim { position:fixed; left:0; top:0; right:0; bottom:0; background:#000; opacity:0;
+         pointer-events:none; transition:opacity 2s; }
+  #dim.on { opacity:.5; }
+
+  .label { font-size:30px; letter-spacing:.28em; color:var(--ink-2); font-weight:500; margin:0 0 10px; }
+  section { border-top:1px solid var(--line); padding-top:24px; }
+
+  .clock { display:flex; flex-direction:column; padding-bottom:26px; }
+  .time { font-family:var(--f-num); font-weight:200; font-size:230px; line-height:.86; letter-spacing:-.02em;
+          font-variant-numeric:tabular-nums; margin-left:-10px; }
+  .time .colon { display:inline-block; -webkit-animation:breathe 2s ease-in-out infinite; animation:breathe 2s ease-in-out infinite; }
+  @-webkit-keyframes breathe { 50% { opacity:.25; } }
+  @keyframes breathe { 50% { opacity:.25; } }
+  .date { margin-top:22px; display:flex; align-items:baseline; font-size:64px; font-weight:300; }
+  .date .wk { color:var(--brass); margin-left:28px; }
+  .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); }
+
+  .brief { padding-bottom:26px; }
+  .brief p { margin:0; font-size:42px; line-height:1.4; font-weight:300; }
+  .brief b { font-weight:500; color:var(--brass); }
+
+  .wx-now { display:flex; align-items:center; }
+  .wx-now svg { width:120px; height:120px; flex:none; margin-right:32px; }
+  .wx-temp { font-family:var(--f-num); font-weight:200; font-size:150px; line-height:.9; letter-spacing:-.02em; }
+  .wx-temp sup { font-size:.42em; vertical-align:top; position:relative; top:.1em; font-weight:300; }
+  .wx-info { margin-left:auto; text-align:right; }
+  .wx-info .cond { font-size:52px; }
+  .wx-info .rng { margin-top:10px; font-size:38px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .wx-hours { margin-top:18px; display:grid; grid-template-columns:repeat(5,1fr); }
+  .wx-hours div { display:flex; flex-direction:column; align-items:center; }
+  .wx-hours div > * + * { margin-top:8px; }
+  .wx-hours .h { font-family:var(--f-num); font-size:34px; color:var(--ink-2); }
+  .wx-hours svg { width:56px; height:56px; }
+  .wx-hours .t { font-family:var(--f-num); font-size:44px; font-weight:300; }
+
+  #schedule { flex:1; margin-top:26px; }
+  .ev { display:grid; grid-template-columns:170px 1fr auto; -webkit-box-align:center; align-items:center;
+        min-height:74px; padding:0 22px; margin:0 -22px; border-radius:22px; }
+  .ev .tm { font-family:var(--f-num); font-size:44px; font-variant-numeric:tabular-nums; margin-right:20px; }
+  .ev .ti { font-size:44px; line-height:1.2; }
+  .ev .who { font-size:32px; color:var(--ink-2); }
+  .ev.past, .ev.past .who { color:var(--ink-3); }
+  .ev.now .tm, .ev.next .tm { color:var(--brass); }
+  .ev.next { background:var(--surface); }
+  .ev .tag { white-space:nowrap; font-size:30px; color:var(--brass); letter-spacing:.06em; }
+  .empty { font-size:40px; color:var(--ink-3); padding:20px 0; }
+
+  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:56px; column-gap:56px; margin-top:26px; }
+  .todo, .rem { list-style:none; margin:0; padding:0; }
+  .todo li, .rem li { display:flex; align-items:center; min-height:70px; font-size:40px; line-height:1.2; }
+  .todo li { cursor:pointer; }
+  .box { width:38px; height:38px; flex:none; border-radius:50%; border:3px solid var(--ink-2); box-sizing:border-box; position:relative; margin-right:20px; }
+  .todo li.done { color:var(--ink-3); text-decoration:line-through; }
+  .todo li.done .box { background:var(--brass); border-color:var(--brass); }
+  .todo li.done .box::after { content:""; position:absolute; left:11px; top:5px; width:9px; height:17px;
+        border:solid var(--ground); border-width:0 4px 4px 0; -webkit-transform:rotate(45deg); transform:rotate(45deg); }
+  .rem li { justify-content:space-between; }
+  .rem .what { min-width:0; margin-right:16px; }
+  .rem .when { flex:none; font-size:30px; color:var(--brass); letter-spacing:.04em; }
+
+  footer { margin-top:20px; font-size:26px; color:var(--ink-3); display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="clock">
+    <div class="time" id="time">--<span class="colon">:</span>--</div>
+    <div class="date"><span id="date">-</span><span class="wk" id="wk">-</span><span class="greet" id="greet"></span></div>
+  </div>
+
+  <section class="brief"><h2 class="label">今日のまとめ</h2><p id="brief">…</p></section>
+
+  <section id="weather">
+    <h2 class="label" id="wxLabel">天气</h2>
+    <div class="wx-now">
+      <div id="wxIcon"></div>
+      <div class="wx-temp" id="wxTemp">--<sup>°</sup></div>
+      <div class="wx-info"><div class="cond" id="wxCond">-</div><div class="rng" id="wxRng">-</div></div>
+    </div>
+    <div class="wx-hours" id="wxHours"></div>
+  </section>
+
+  <section id="schedule"><h2 class="label">今日の予定</h2><div id="events"></div></section>
+
+  <div class="duo">
+    <section><h2 class="label">ToDo</h2><ul class="todo" id="todo"></ul></section>
+    <section><h2 class="label">家族リマインダー</h2><ul class="rem" id="rem"></ul></section>
+  </div>
+
+  <footer><span id="ftL">v0.3.2</span><span id="ftR"></span></footer>
+</div>
+<div id="dim"></div>
+
+<script>
+/* ============================================================
+   CONFIG —— 只需要改这里
+   数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
+   ============================================================ */
+var CONFIG = {
+  city: "東京", lat: 35.68, lon: 139.69,
+  dataUrl: "data.json",                 // 同目录下的 data.json（可由日历同步任务生成）
+  sheets: {                             // Google 表格「发布到网络」得到的 CSV 链接，留空则不使用
+    events:    "",
+    todos:     "",
+    reminders: ""
+  },
+  refreshMin: 5,                        // 每几分钟重新取一次数据
+  nightFrom: 22, nightTo: 6             // 夜间自动调暗
+};
+
+/* 内置示例（取不到任何数据时显示） */
+var state = {
+  events: [
+    { s:"09:30", e:"10:30", title:"ヨガ教室", who:"ママ" },
+    { s:"11:00", e:"12:00", title:"スイミング", who:"子ども" },
+    { s:"14:00", e:"15:00", title:"宅配便の受取", who:"家族" },
+    { s:"18:30", e:"20:00", title:"家族の夕食", who:"家族" }
+  ],
+  todos: [ {t:"牛乳と卵を買う"}, {t:"歯医者の予約"}, {t:"植物に水やり"}, {t:"段ボールを片付ける"} ],
+  reminders: [
+    { d:"明日", what:"可燃ごみの日" }, { d:"月曜", what:"敬老の日・電話する" },
+    { d:"9/25", what:"光熱費の支払期限" }, { d:"9/30", what:"健診結果の受取" }
+  ],
+  brief: "", src: "サンプルデータ", updated: ""
+};
+
+/* ---------- 工具 ---------- */
+function $(id) { return document.getElementById(id); }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function toMin(hhmm) { var p = String(hhmm).split(":"); return (+p[0]) * 60 + (+p[1] || 0); }
+function fmtMin(m) { return pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60); }
+var WK = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
+var WKS = ["日曜","月曜","火曜","水曜","木曜","金曜","土曜"];
+function todayStr() { var n = new Date(); return n.getFullYear() + "-" + pad(n.getMonth() + 1) + "-" + pad(n.getDate()); }
+/* 解析 2026-09-19 / 2026/9/19 / 9/19 → Date(当天0点)；无法解析返回 null */
+function parseDate(s) {
+  var m = String(s || "").trim().match(/^(?:(\d{4})[-\/])?(\d{1,2})[-\/](\d{1,2})$/);
+  if (!m) return null;
+  return new Date(m[1] ? +m[1] : new Date().getFullYear(), +m[2] - 1, +m[3]);
+}
+function dayDiff(d) { var n = new Date(); var t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()); return Math.round((d - t0) / 864e5); }
+
+/* ---------- 舞台等比缩放 ---------- */
+var stage = $("stage");
+function fit() {
+  var s = Math.min(innerWidth / 1080, innerHeight / 1920);
+  var v = "translate(-50%,-50%) scale(" + s + ")";
+  stage.style.webkitTransform = v; stage.style.transform = v;
+}
+addEventListener("resize", fit); addEventListener("orientationchange", fit); fit();
+
+/* ---------- 天气图标 ---------- */
+var P = {
+  sun:  '<circle cx="32" cy="32" r="10"/><path d="M32 10v6M32 48v6M10 32h6M48 32h6M16.5 16.5l4.2 4.2M43.3 43.3l4.2 4.2M16.5 47.5l4.2-4.2M43.3 20.7l4.2-4.2"/>',
+  cloud:'<path d="M18 46h27a9 9 0 0 0 1.5-17.9A14 14 0 0 0 19.3 30 8 8 0 0 0 18 46z"/>',
+  part: '<circle cx="24" cy="22" r="7"/><path d="M24 8v3M10 22h3M14 12l2 2M34 12l-2 2"/><path d="M22 50h24a8 8 0 0 0 1.3-15.9A12 12 0 0 0 25 37a6.5 6.5 0 0 0-3 13z"/>',
+  rain: '<path d="M18 38h27a9 9 0 0 0 1.5-17.9A14 14 0 0 0 19.3 22 8 8 0 0 0 18 38z"/><path d="M23 45l-3 8M33 45l-3 8M43 45l-3 8"/>',
+  thun: '<path d="M18 36h27a9 9 0 0 0 1.5-17.9A14 14 0 0 0 19.3 20 8 8 0 0 0 18 36z"/><path d="M34 38l-6 9h7l-5 9"/>',
+  snow: '<path d="M18 36h27a9 9 0 0 0 1.5-17.9A14 14 0 0 0 19.3 20 8 8 0 0 0 18 36z"/><path d="M24 45v.1M34 45v.1M44 45v.1M29 53v.1M39 53v.1"/>'
+};
+function icon(k) { return '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">' + P[k] + '</svg>'; }
+function wmo(c) {
+  if (c === 0) return ["sun","晴れ"];
+  if (c <= 2) return ["part","晴れ時々くもり"];
+  if (c === 3) return ["cloud","くもり"];
+  if (c <= 48) return ["cloud","霧"];
+  if (c <= 67 || (c >= 80 && c <= 82)) return ["rain","雨"];
+  if (c <= 77 || c === 85 || c === 86) return ["snow","雪"];
+  return ["thun","雷雨"];
+}
+
+/* ---------- 天气（Open-Meteo，失败则显示示例） ---------- */
+var weather = { live:false, temp:26, code:2, hi:29, lo:21, pop:60,
+  hours:[[0,26,2],[3,28,0],[6,27,3],[8,24,61],[11,22,3]] };
+function loadWeather() {
+  var u = "https://api.open-meteo.com/v1/forecast?latitude=" + CONFIG.lat + "&longitude=" + CONFIG.lon +
+    "&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code" +
+    "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=2";
+  return fetch(u).then(function (r) { return r.json(); }).then(function (j) {
+    var i = new Date().getHours();
+    weather = { live:true, temp:Math.round(j.current.temperature_2m), code:j.current.weather_code,
+      hi:Math.round(j.daily.temperature_2m_max[0]), lo:Math.round(j.daily.temperature_2m_min[0]),
+      pop:j.daily.precipitation_probability_max[0],
+      hours:[0,3,6,9,12].map(function (d) { return [d, Math.round(j.hourly.temperature_2m[i + d]), j.hourly.weather_code[i + d]]; }) };
+  }).catch(function () {}).then(function () { renderWeather(); renderBrief(); renderFooter(); });
+}
+function renderWeather() {
+  var w = wmo(weather.code), h0 = new Date().getHours();
+  $("wxLabel").textContent = "天気 · " + CONFIG.city;
+  $("wxIcon").innerHTML = icon(w[0]);
+  $("wxTemp").innerHTML = weather.temp + "<sup>°</sup>";
+  $("wxCond").textContent = w[1];
+  $("wxRng").textContent = weather.hi + "° / " + weather.lo + "°  ·  降水 " + weather.pop + "%";
+  $("wxHours").innerHTML = weather.hours.map(function (x) {
+    return '<div><span class="h">' + (x[0] === 0 ? "現在" : pad((h0 + x[0]) % 24) + "時") + '</span>' + icon(wmo(x[2])[0]) + '<span class="t">' + x[1] + '°</span></div>';
+  }).join("");
+}
+
+/* ---------- 日程 ---------- */
+function todaysEvents() {
+  var td = todayStr();
+  var list = state.events.filter(function (e) {
+    if (!e.date) return true;
+    var d = parseDate(e.date); return d && dayDiff(d) === 0;
+  }).map(function (e) {
+    var s = toMin(e.s), en = e.e ? toMin(e.e) : s + 60;
+    return { s:s, e:en, title:e.title, who:e.who || "" };
+  }).sort(function (a, b) { return a.s - b.s; });
+  return list;
+}
+function renderEvents() {
+  var n = new Date(), now = n.getHours() * 60 + n.getMinutes();
+  var all = todaysEvents(), MAX = 4;
+  var upcoming = all.filter(function (e) { return e.e > now; });
+  var past = all.filter(function (e) { return e.e <= now; });
+  var show = upcoming.slice(0, MAX);
+  if (show.length < MAX) show = past.slice(-(MAX - show.length)).concat(show);
+  if (!show.length) { $("events").innerHTML = '<div class="empty">今日は予定がありません。ゆっくり休みましょう</div>'; return; }
+  var nextS = null;
+  for (var k = 0; k < all.length; k++) if (all[k].s > now) { nextS = all[k]; break; }
+  $("events").innerHTML = show.map(function (e) {
+    var isPast = e.e <= now, cur = e.s <= now && now < e.e, isNext = nextS === e;
+    var cls = isPast ? "past" : cur ? "now" : isNext ? "next" : "", tag = "";
+    if (cur) tag = '<span class="tag">進行中</span>';
+    else if (isNext) { var d = e.s - now; tag = '<span class="tag">あと' + (d >= 60 ? Math.floor(d / 60) + "時間" + (d % 60 ? d % 60 + "分" : "") : d + "分") + '</span>'; }
+    return '<div class="ev ' + cls + '"><span class="tm">' + fmtMin(e.s) + '</span><span class="ti">' + e.title +
+           (e.who ? ' <span class="who">' + e.who + '</span>' : '') + '</span>' + (tag || "<span></span>") + '</div>';
+  }).join("");
+}
+
+/* ---------- 简报：data.json 里有当天的 AI 简报就用它，否则按规则拼 ---------- */
+function renderBrief() {
+  if (state.brief) { $("brief").innerHTML = state.brief; return; }
+  var n = new Date(), now = n.getHours() * 60 + n.getMinutes(), w = wmo(weather.code);
+  var s = "今日は<b>" + weather.lo + "–" + weather.hi + "°C</b>" +
+          (weather.pop >= 50 ? "、降水確率 " + weather.pop + "%、<b>傘を持って</b>。" : "、過ごしやすい一日。");
+  var nx = todaysEvents().filter(function (e) { return e.s > now; })[0];
+  s += nx ? "次は<b>" + fmtMin(nx.s) + " " + nx.title + "</b>。" : "今日の予定は全部おわり。";
+  $("brief").innerHTML = s;
+}
+
+/* ---------- 待办（点击勾选只记在这台 iPad 本地） ---------- */
+var KEY = "family-board-done", doneMap = {};
+try { doneMap = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+function renderTodo() {
+  var items = state.todos.slice(0, 4);
+  $("todo").innerHTML = items.length ? items.map(function (x, i) {
+    var dn = x.done || doneMap[x.t];
+    return '<li class="' + (dn ? "done" : "") + '" data-i="' + i + '"><span class="box"></span><span>' + x.t + '</span></li>';
+  }).join("") : '<li style="color:var(--ink-3)">ToDoはありません</li>';
+}
+$("todo").addEventListener("click", function (ev) {
+  var li = ev.target; while (li && li.tagName !== "LI") li = li.parentNode;
+  if (!li || li.getAttribute("data-i") === null) return;
+  var x = state.todos[+li.getAttribute("data-i")]; if (!x) return;
+  doneMap[x.t] = !(x.done || doneMap[x.t]); x.done = false;
+  try { localStorage.setItem(KEY, JSON.stringify(doneMap)); } catch (e) {}
+  renderTodo();
+});
+
+/* ---------- 家庭提醒：日期自动换成 今天/明天/周X/M/D，过期的自动隐藏 ---------- */
+function whenLabel(x) {
+  var d = parseDate(x.d); if (!d) return { text:x.d, key:-1, keep:true };
+  var diff = dayDiff(d);
+  return { text: diff === 0 ? "今日" : diff === 1 ? "明日" : (diff > 1 && diff < 7) ? WKS[d.getDay()] : (d.getMonth() + 1) + "/" + d.getDate(),
+           key: diff, keep: diff >= 0 };
+}
+function renderRem() {
+  var rows = state.reminders.map(function (x) { var w = whenLabel(x); return { w:w, what:x.what }; })
+    .filter(function (r) { return r.w.keep; }).sort(function (a, b) { return a.w.key - b.w.key; }).slice(0, 4);
+  $("rem").innerHTML = rows.length ? rows.map(function (r) {
+    return '<li><span class="what">' + r.what + '</span><span class="when">' + r.w.text + '</span></li>';
+  }).join("") : '<li style="color:var(--ink-3)">リマインダーはありません</li>';
+}
+
+/* ---------- 数据加载：data.json 与 Google 表格 ---------- */
+function parseCSV(t) {
+  var rows = [], row = [], f = "", q = false, i, c;
+  for (i = 0; i < t.length; i++) {
+    c = t.charAt(i);
+    if (q) { if (c === '"') { if (t.charAt(i + 1) === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && t.charAt(i + 1) === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows.slice(1).filter(function (r) { return r.some(function (x) { return x.trim(); }); });   // 去掉表头与空行
+}
+function getText(url) {
+  return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now()).then(function (r) { if (!r.ok) throw 0; return r.text(); });
+}
+function loadData() {
+  var srcs = [];
+  var p = getText(CONFIG.dataUrl).then(function (t) {
+    var d = JSON.parse(t);
+    if (d.events) state.events = d.events;
+    if (d.todos) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
+    if (d.reminders) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
+    state.brief = (d.brief && d.briefDate === todayStr()) ? d.brief : "";
+    srcs.push("data.json");
+  }).catch(function () {});
+  var S = CONFIG.sheets;
+  if (S.events) p = p.then(function () { return getText(S.events).then(function (t) {   // 列：日期,开始,结束,标题,谁
+    state.events = parseCSV(t).map(function (r) { return { date:r[0], s:r[1], e:r[2], title:r[3], who:r[4] }; }).filter(function (e) { return e.s && e.title; });
+    srcs.push("シート·予定"); }).catch(function () {}); });
+  if (S.todos) p = p.then(function () { return getText(S.todos).then(function (t) {     // 列：事项,完成
+    state.todos = parseCSV(t).map(function (r) { return { t:r[0], done:/^(y|yes|1|是|完成|完了|済|✓|true)$/i.test((r[1] || "").trim()) }; }).filter(function (x) { return x.t; });
+    srcs.push("シート·ToDo"); }).catch(function () {}); });
+  if (S.reminders) p = p.then(function () { return getText(S.reminders).then(function (t) { // 列：日期,事项
+    state.reminders = parseCSV(t).map(function (r) { return { d:r[0], what:r[1] }; }).filter(function (x) { return x.what; });
+    srcs.push("シート·リマインダー"); }).catch(function () {}); });
+  return p.then(function () {
+    if (srcs.length) { state.src = srcs.join(" / "); var n = new Date(); state.updated = pad(n.getHours()) + ":" + pad(n.getMinutes()); }
+    renderEvents(); renderTodo(); renderRem(); renderBrief(); renderFooter();
+  });
+}
+function renderFooter() {
+  $("ftL").textContent = "v0.3.2 · 天気" + (weather.live ? "ライブ" : "サンプル");
+  $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
+}
+
+/* ---------- 时钟 / 日期 / 夜间调暗 / 每日 3 点整页刷新 ---------- */
+function tick() {
+  var n = new Date(), h = n.getHours();
+  $("time").innerHTML = pad(h) + '<span class="colon">:</span>' + pad(n.getMinutes());
+  $("date").textContent = (n.getMonth() + 1) + "月" + n.getDate() + "日";
+  $("wk").textContent = WK[n.getDay()];
+  $("greet").textContent = h < 5 ? "夜更けです" : h < 11 ? "おはよう" : h < 18 ? "こんにちは" : "こんばんは";
+  var night = h >= CONFIG.nightFrom || h < CONFIG.nightTo;
+  $("dim").className = night ? "on" : "";
+  if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 2) location.reload();   // 旧 iPad 长时间运行防卡顿
+}
+
+tick(); renderWeather(); renderEvents(); renderTodo(); renderRem(); renderBrief(); renderFooter();
+loadData(); loadWeather();
+setInterval(tick, 1000);
+setInterval(function () { renderEvents(); renderRem(); renderBrief(); }, 60000);
+setInterval(loadData, CONFIG.refreshMin * 60000);
+setInterval(loadWeather, 30 * 60000);
+
+/* 新系统可用的屏幕常亮（iOS 12 没有，会被忽略；请在设置里把自动锁定设为永不） */
+try { addEventListener("click", function () { if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(function () {}); }); } catch (e) {}
+</script>
+</body>
+</html>
