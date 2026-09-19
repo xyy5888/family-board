@@ -74,9 +74,14 @@
   .wx-info .rng { margin-top:10px; font-size:38px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
   .wx-info .rng .pop i { font-style:normal; }
 
-  /* 每小时天气 / 降水概率 */
-  .hrs { display:grid; grid-template-columns:repeat(6,1fr); }
-  .hr { display:flex; flex-direction:column; align-items:center; }
+  /* 每小时天气 / 降水概率（横スワイプで24時間） */
+  .hrs { display:flex; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; -ms-overflow-style:none; }
+  .hrs::-webkit-scrollbar { display:none; height:0; }
+  .hr { flex:0 0 16.6667%; box-sizing:border-box; scroll-snap-align:start; display:flex; flex-direction:column; align-items:center; }
+  .hr.day { border-left:1px solid var(--line); }
+  .hr .h.nx { color:var(--cyan); }
+  .hscroll { position:relative; height:4px; margin-top:8px; border-radius:2px; background:rgba(141,168,200,.22); }
+  .hscroll i { position:absolute; left:0; top:0; width:25%; height:4px; border-radius:2px; background:var(--cyan); box-shadow:0 0 8px rgba(79,209,255,.7); }
   .hr > * + * { margin-top:2px; }
   .hr .mid { display:flex; align-items:center; justify-content:center; }
   .hr .h { font-size:32px; line-height:1.2; color:var(--ink-2); font-family:var(--f-num); }
@@ -148,7 +153,7 @@
   #stage.s5 .quote { display:none; }
   #stage.s6 .ev { min-height:50px; }
   #stage.s6 .todo li, #stage.s6 .rem li { min-height:44px; }
-  #stage.s6 .hr .bar { display:none; }
+  #stage.s6 .hr .bar, #stage.s6 .hscroll { display:none; }
   /* 旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠：禁止收缩，溢出交给 fit() 检测 */
   #stage > *, .top > *, .clock > *, #weather > * { flex-shrink:0; }
 </style>
@@ -184,7 +189,7 @@
     </section>
   </div>
 
-  <section class="hourly panel"><div class="hrs" id="hrs"></div></section>
+  <section class="hourly panel"><div class="hrs" id="hrs"></div><div class="hscroll"><i id="hthumb"></i></div></section>
 
   <section id="schedule" class="panel"><h2 class="label">今日の予定</h2><div id="events"></div></section>
 
@@ -195,7 +200,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.6.3</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.6.4</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -204,7 +209,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.6.3";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.6.4";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -347,6 +352,7 @@ function fit() {
     stage.className = mode + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
     if (stage.scrollHeight <= H + 1) break;
   }
+  try { updateThumb(); } catch (e) {}
 }
 addEventListener("resize", fit); addEventListener("orientationchange", fit); addEventListener("load", fit); fit();
 try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit); } catch (e) {}
@@ -385,7 +391,7 @@ function loadWeather() {
     weather = { live:true, temp:Math.round(j.current.temperature_2m), code:j.current.weather_code,
       hi:Math.round(j.daily.temperature_2m_max[0]), lo:Math.round(j.daily.temperature_2m_min[0]),
       pop:j.daily.precipitation_probability_max[0],
-      hours:[0,1,2,3,4,5].map(function (d) { return [d, Math.round(j.hourly.temperature_2m[i + d]), j.hourly.weather_code[i + d], j.hourly.precipitation_probability[i + d]]; }) };
+      hours:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23].map(function (d) { return [d, Math.round(j.hourly.temperature_2m[i + d]), j.hourly.weather_code[i + d], j.hourly.precipitation_probability[i + d]]; }) };
   }).catch(function () {}).then(function () { renderWeather(); renderFooter(); fit(); });
 }
 function renderWeather() {
@@ -395,13 +401,41 @@ function renderWeather() {
   $("wxTemp").innerHTML = weather.temp + "<sup>°</sup>";
   $("wxCond").textContent = w[1];
   $("wxRng").innerHTML = weather.hi + "° / " + weather.lo + "°<span class=\"pop\"><i>  ·  </i>降水 " + weather.pop + "%</span>";
-  $("hrs").innerHTML = weather.hours.map(function (x) {
-    var hi = x[3] >= 50;
-    return '<div class="hr"><span class="h">' + (x[0] === 0 ? "現在" : pad((h0 + x[0]) % 24) + "時") + '</span><span class="mid"><span class="ic">' + icon(wmo(x[2])[0]) +
+  var box = $("hrs"), keep = box.scrollLeft;                                  // 毎分の再描画でスワイプ位置が戻らないよう保持
+  box.innerHTML = weather.hours.map(function (x) {
+    var hi = x[3] >= 50, hh = h0 + x[0];
+    return '<div class="hr' + (hh === 24 ? " day" : "") + '"><span class="h' + (hh >= 24 ? " nx" : "") + '">' + (x[0] === 0 ? "現在" : pad(hh % 24) + "時") + '</span><span class="mid"><span class="ic">' + icon(wmo(x[2])[0]) +
            '</span><span class="t">' + x[1] + '°</span></span><span class="p' + (hi ? " hi" : "") + '">' + DROP + x[3] + '%</span>' +
            '<span class="bar' + (hi ? " hi" : "") + '"><i style="width:' + Math.max(4, x[3]) + '%"></i></span></div>';
   }).join("");
+  box.scrollLeft = keep; updateThumb();
 }
+
+/* ---------- 24時間リスト：スクロールバー表示 / 触らなければ「現在」に自動で戻る ---------- */
+var hIdle = null, hAnim = false;
+function updateThumb() {
+  var b = $("hrs"), t = $("hthumb"), sw = b.scrollWidth, cw = b.clientWidth;
+  if (!sw || !cw) return;
+  t.style.width = (cw / sw * 100) + "%"; t.style.left = (b.scrollLeft / sw * 100) + "%";
+}
+function resetHours() {
+  var b = $("hrs"), from = b.scrollLeft, t0 = new Date().getTime();
+  if (from < 2) return;
+  hAnim = true;
+  (function step() {
+    if (!hAnim) return;                                                        // 途中で指が触れたら中断
+    var k = Math.min(1, (new Date().getTime() - t0) / 450);
+    b.scrollLeft = from * Math.pow(1 - k, 3);
+    updateThumb();
+    if (k < 1) setTimeout(step, 16); else hAnim = false;
+  })();
+}
+$("hrs").addEventListener("scroll", function () {
+  updateThumb();
+  if (hAnim) return;
+  clearTimeout(hIdle); hIdle = setTimeout(resetHours, 20000);                  // 20秒操作がなければ「現在」に戻る
+});
+$("hrs").addEventListener("touchstart", function () { hAnim = false; }, false);
 
 /* ---------- 今日の名言 ---------- */
 function renderQuote() {
