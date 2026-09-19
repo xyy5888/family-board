@@ -145,6 +145,10 @@
   #stage.s2 .todo li:nth-child(4), #stage.s2 .rem li:nth-child(4) { display:none; }
   #stage.s3 .quote .qc { display:none; }
   #stage.s4 .ev.past { display:none; }
+  #stage.s5 .quote { display:none; }
+  #stage.s6 .ev { min-height:50px; }
+  #stage.s6 .todo li, #stage.s6 .rem li { min-height:44px; }
+  #stage.s6 .hr .bar { display:none; }
   /* 旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠：禁止收缩，溢出交给 fit() 检测 */
   #stage > *, .top > *, .clock > *, #weather > * { flex-shrink:0; }
 </style>
@@ -191,7 +195,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.6</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.6.1</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -344,14 +348,14 @@ function shrinkTo(el, base, max) {
 var stage = $("stage");
 function fit() {
   var s = innerWidth / 1080, H = innerHeight / s;
-  if (H < 1300) { H = 1300; s = Math.min(s, innerHeight / 1300); }
+  if (H < 1100) { H = 1100; s = Math.min(s, innerHeight / 1100); }      // 只有极扁的屏幕才留边，Safari 带地址栏时也铺满宽度
   stage.style.height = H + "px";
   var v = "translate(-50%,-50%) scale(" + s + ")";
   stage.style.webkitTransform = v; stage.style.transform = v;
-  var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3", "s4"];
+  var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3", "s4", "s5", "s6"];
   stage.className = mode;
   shrinkTo($("time"), 280, 640); shrinkTo($("date").parentNode, 72, 640);      // 时钟/日期太宽时自动缩小，给右侧天气留位置
-  for (var i = 0; i < lv.length; i++) {          // 放不下就依次收起：页脚 → 第4条待办 → 名言出处 → 已过日程
+  for (var i = 0; i < lv.length; i++) {          // 放不下就依次收起：页脚 → 第4条待办 → 名言出处 → 已过日程 → 名言 → 行距压缩
     stage.className = mode + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
     if (stage.scrollHeight <= H + 1) break;
   }
@@ -527,7 +531,7 @@ function loadData() {
   });
 }
 function renderFooter() {
-  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.6";
+  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.6.1";
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
