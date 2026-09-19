@@ -14,15 +14,15 @@
   :root {
     --bg0:#040A16; --bg1:#081A36; --glow:#0F3A78;
     --panelA:rgba(40,100,180,.20); --panelB:rgba(10,32,76,.34); --line:rgba(100,178,255,.28);
-    --ink:#EAF4FF; --ink-2:#8DA8C8; --ink-3:#4E6683; --cyan:#4FD1FF; --amber:#FFB547;
+    --ink:#F7FBFF; --ink-2:#BCD0E8; --ink-3:#8299B8; --cyan:#5CD8FF; --amber:#FFC062;
     --f-txt:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
     --f-num:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Helvetica Neue",Arial,sans-serif;
     --f-quote:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif;
-    --w-time:300;
+    --w-time:400;
   }
   /* 兼容 iOS 12 Safari：不使用 flex 的 gap / inset / aspect-ratio 等新属性 */
   html, body { height:100%; margin:0; background:var(--bg0); }
-  body { overflow:hidden; color:var(--ink); font-family:var(--f-txt); font-weight:400;
+  body { overflow:hidden; color:var(--ink); font-family:var(--f-txt); font-weight:500;
          background:
            radial-gradient(1100px 700px at 12% -8%, rgba(30,100,200,.55) 0%, rgba(30,100,200,0) 62%),
            radial-gradient(900px 700px at 108% 104%, rgba(20,80,170,.50) 0%, rgba(20,80,170,0) 60%),
@@ -34,10 +34,10 @@
   #bg svg { width:100%; height:100%; display:block; }
 
   #stage { position:absolute; z-index:1; left:50%; top:50%; width:1080px; height:1920px; box-sizing:border-box;
-           padding:48px 68px 40px; display:flex; flex-direction:column; transform-origin:center center; }
+           padding:48px 30px 40px; display:flex; flex-direction:column; transform-origin:center center; }
   #dim { position:fixed; z-index:5; left:0; top:0; right:0; bottom:0; background:#000; opacity:0;
          pointer-events:none; transition:opacity 2s; }
-  #dim.on { opacity:.5; }
+  #dim.on { opacity:.22; }      /* 夜間の減光（0.22 = 22% 暗く。もっと暗くしたいときは数字を大きく） */
 
   /* パネル：半透明の青 + 細い発光縁 + 左上のハイライト線 */
   .panel { position:relative; box-sizing:border-box; margin-top:10px; padding:10px 18px 10px;
@@ -55,9 +55,9 @@
   .time .colon { display:inline-block; -webkit-animation:breathe 2s ease-in-out infinite; animation:breathe 2s ease-in-out infinite; }
   @-webkit-keyframes breathe { 50% { opacity:.25; } }
   @keyframes breathe { 50% { opacity:.25; } }
-  .date { margin-top:10px; display:flex; align-items:baseline; font-size:72px; line-height:1.1; font-weight:400; white-space:nowrap; }
+  .date { margin-top:10px; display:flex; align-items:baseline; font-size:72px; line-height:1.1; font-weight:500; white-space:nowrap; }
   .date .wk { color:var(--cyan); margin-left:22px; text-shadow:0 0 14px rgba(79,209,255,.5); }
-  .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); font-weight:300; }
+  .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); font-weight:400; }
   /* 一日の経過メーター（目盛り + 発光バー） */
   .scale { position:relative; height:10px; margin-top:12px; border-radius:5px;
            background:repeating-linear-gradient(90deg, rgba(141,168,200,.55) 0, rgba(141,168,200,.55) 2px, transparent 2px, transparent 10px); }
@@ -81,7 +81,7 @@
   .hr .mid { display:flex; align-items:center; justify-content:center; }
   .hr .h { font-size:32px; line-height:1.2; color:var(--ink-2); font-family:var(--f-num); }
   .hr .ic svg { width:48px; height:48px; display:block; margin-right:6px; }
-  .hr .t { font-family:var(--f-num); font-size:46px; font-weight:400; line-height:1.1; }
+  .hr .t { font-family:var(--f-num); font-size:46px; font-weight:500; line-height:1.1; }
   .hr .p { font-family:var(--f-num); font-size:32px; line-height:1.2; color:var(--ink-2); font-variant-numeric:tabular-nums; }
   .hr .p.hi { color:var(--amber); }
   .hr .p svg { width:22px; height:22px; margin-right:3px; vertical-align:-2px; }
@@ -119,12 +119,12 @@
   .quote { padding-bottom:8px; }
   .quote .q { margin:0; font-family:var(--f-quote); font-weight:500; font-size:44px; line-height:1.35; text-shadow:0 0 18px rgba(79,209,255,.22); }
   .quote .q.l { font-size:54px; } .quote .q.s { font-size:38px; }
-  .quote .qc { margin:4px 0 0; font-size:26px; color:var(--ink-2); font-weight:300; }
+  .quote .qc { margin:4px 0 0; font-size:26px; color:var(--ink-2); font-weight:400; }
 
   footer { margin-top:8px; font-size:22px; color:var(--ink-3); display:flex; justify-content:space-between; }
 
   /* ===== 宽屏（iPad 4:3）：天气模块放到时钟右侧 ===== */
-  #stage.wide { padding:34px 52px 26px; }
+  #stage.wide { padding:30px 22px 24px; }
   #stage.wide .top { flex-direction:row; align-items:stretch; }
   #stage.wide .time { font-size:280px; }
   #stage.wide .clock { flex:none; }
@@ -195,7 +195,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.6.2</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.6.3</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -204,6 +204,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
+var APP_VERSION = "0.6.3";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -341,7 +342,7 @@ function fit() {
   stage.style.webkitTransform = v; stage.style.transform = v;
   var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3", "s4", "s5", "s6"];
   stage.className = mode;
-  shrinkTo($("time"), 280, 640); shrinkTo($("date").parentNode, 72, 640);      // 时钟/日期太宽时自动缩小，给右侧天气留位置
+  shrinkTo($("time"), 280, 680); shrinkTo($("date").parentNode, 72, 680);      // 时钟/日期太宽时自动缩小，给右侧天气留位置
   for (var i = 0; i < lv.length; i++) {          // 放不下就依次收起：页脚 → 第4条待办 → 名言出处 → 已过日程 → 名言 → 行距压缩
     stage.className = mode + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
     if (stage.scrollHeight <= H + 1) break;
@@ -508,6 +509,7 @@ function loadData() {
     if (d.todos) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
     if (d.reminders) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
     if (d.sheets) for (var k in d.sheets) if (d.sheets[k]) CONFIG.sheets[k] = d.sheets[k];
+    if (d.appVersion && d.appVersion !== APP_VERSION && !/[?&]v=/.test(location.search)) { location.replace(location.pathname + "?v=" + d.appVersion); return; }   // 新しい版が出たら自動更新
     state.quote = (d.quote && d.quote.t && d.quoteDate === todayStr()) ? [d.quote.t, d.quote.c || ""] : null;
     srcs.push("data.json");
   }).catch(function () {});
@@ -524,7 +526,7 @@ function loadData() {
   });
 }
 function renderFooter() {
-  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.6.2";
+  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v" + APP_VERSION;
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
