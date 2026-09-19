@@ -1,18 +1,16 @@
 {
-  "updated": "2026-09-19T09:00:00+09:00",
-  "events": [
-    { "s": "09:30", "e": "10:30", "title": "ヨガ教室", "who": "ママ" },
-    { "s": "11:00", "e": "12:00", "title": "スイミング", "who": "子ども" },
-    { "s": "14:00", "e": "15:00", "title": "宅配便の受取", "who": "家族" },
-    { "s": "18:30", "e": "20:00", "title": "家族の夕食", "who": "家族" }
-  ],
-  "todos": ["牛乳と卵を買う", "歯医者の予約", "植物に水やり", "段ボールを片付ける"],
-  "reminders": [
-    { "when": "2026-09-20", "what": "可燃ごみの日" },
-    { "when": "2026-09-21", "what": "敬老の日・電話する" },
-    { "when": "2026-09-25", "what": "光熱費の支払期限" },
-    { "when": "2026-09-30", "what": "健診結果の受取" }
-  ],
-  "brief": "",
-  "briefDate": ""
+  "updated": "2026-09-19",
+  "sheets": {
+    "events": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkLgKGaq0qjmEn8Ab5poYuC3K_3Dz_96cQ1hYUai0z6ZzhcuDqRUWgG38_WQqF7_47-ibIxlg1l7lW/pub?gid=610684541&single=true&output=csv",
+    "todos": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkLgKGaq0qjmEn8Ab5poYuC3K_3Dz_96cQ1hYUai0z6ZzhcuDqRUWgG38_WQqF7_47-ibIxlg1l7lW/pub?gid=1354655577&single=true&output=csv",
+    "reminders": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkLgKGaq0qjmEn8Ab5poYuC3K_3Dz_96cQ1hYUai0z6ZzhcuDqRUWgG38_WQqF7_47-ibIxlg1l7lW/pub?gid=186722152&single=true&output=csv"
+  },
+  "events": [],
+  "todos": [],
+  "reminders": [],
+  "quote": {
+    "t": "",
+    "c": ""
+  },
+  "quoteDate": ""
 }
