@@ -195,7 +195,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.6.1</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.6.2</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -208,7 +208,7 @@ var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
   dataUrl: "data.json",
-  sheets: { events: "", todos: "", reminders: "" },
+  sheets: { events: "", todos: "", reminders: "" },   // 実際の URL は data.json の "sheets" に書く
   refreshMin: 5,
   nightFrom: 22, nightTo: 6
 };
@@ -304,21 +304,8 @@ var QUOTES = [
   ["花の雲鐘は上野か浅草か","松尾芭蕉"]
 ];
 
-/* 内置示例 */
-var state = {
-  events: [
-    { s:"09:30", e:"10:30", title:"ヨガ教室", who:"ママ" },
-    { s:"11:00", e:"12:00", title:"スイミング", who:"子ども" },
-    { s:"14:00", e:"15:00", title:"宅配便の受取", who:"家族" },
-    { s:"18:30", e:"20:00", title:"家族の夕食", who:"家族" }
-  ],
-  todos: [ {t:"牛乳と卵を買う"}, {t:"歯医者の予約"}, {t:"植物に水やり"}, {t:"段ボールを片付ける"} ],
-  reminders: [
-    { d:"明日", what:"可燃ごみの日" }, { d:"月曜", what:"敬老の日・電話する" },
-    { d:"9/25", what:"光熱費の支払期限" }, { d:"9/30", what:"健診結果の受取" }
-  ],
-  quote: null, src: "サンプルデータ", updated: ""
-};
+/* 初期状態（データが読めるまで空。取得できなければ「予定なし」等が表示される） */
+var state = { events: [], todos: [], reminders: [], quote: null, src: "読み込み中", updated: "" };
 
 /* ---------- 工具 ---------- */
 function $(id) { return document.getElementById(id); }
@@ -458,10 +445,11 @@ function renderEvents() {
 var KEY = "family-board-done", doneMap = {};
 try { doneMap = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
 function renderTodo() {
-  var items = state.todos.slice(0, 4);
-  $("todo").innerHTML = items.length ? items.map(function (x, i) {
-    var dn = x.done || doneMap[x.t];
-    return '<li class="' + (dn ? "done" : "") + '" data-i="' + i + '"><span class="box"></span><span>' + x.t + '</span></li>';
+  var items = state.todos.map(function (x, i) { return { x:x, i:i, d:(x.done || doneMap[x.t]) ? 1 : 0 }; });
+  items.sort(function (a, b) { return a.d - b.d || a.i - b.i; });          // 未完了 → 完了済みの順
+  items = items.slice(0, 4);
+  $("todo").innerHTML = items.length ? items.map(function (o) {
+    return '<li class="' + (o.d ? "done" : "") + '" data-i="' + o.i + '"><span class="box"></span><span>' + o.x.t + '</span></li>';
   }).join("") : '<li style="color:var(--ink-3)">ToDoはありません</li>';
 }
 $("todo").addEventListener("click", function (ev) {
@@ -503,35 +491,40 @@ function parseCSV(t) {
   return rows.slice(1).filter(function (r) { return r.some(function (x) { return x.trim(); }); });
 }
 function getText(url) {
-  return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now()).then(function (r) { if (!r.ok) throw 0; return r.text(); });
+  return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now()).then(function (r) { if (!r.ok) throw 0; return r.text(); })
+    .then(function (t) { if (/^\s*</.test(t)) throw 0; return t; });      // 未公開のシートはログイン画面(HTML)が返るので無視する
 }
 function loadData() {
   var srcs = [];
+  function sheet(key, label, apply) {            // data.json で指定された CSV を読み、あれば内容を上書き
+    return function () {
+      var u = CONFIG.sheets[key]; if (!u) return;
+      return getText(u).then(function (t) { apply(parseCSV(t)); srcs.push(label); }).catch(function () {});
+    };
+  }
   var p = getText(CONFIG.dataUrl).then(function (t) {
     var d = JSON.parse(t);
     if (d.events) state.events = d.events;
     if (d.todos) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
     if (d.reminders) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
+    if (d.sheets) for (var k in d.sheets) if (d.sheets[k]) CONFIG.sheets[k] = d.sheets[k];
     state.quote = (d.quote && d.quote.t && d.quoteDate === todayStr()) ? [d.quote.t, d.quote.c || ""] : null;
     srcs.push("data.json");
   }).catch(function () {});
-  var S = CONFIG.sheets;
-  if (S.events) p = p.then(function () { return getText(S.events).then(function (t) {
-    state.events = parseCSV(t).map(function (r) { return { date:r[0], s:r[1], e:r[2], title:r[3], who:r[4] }; }).filter(function (e) { return e.s && e.title; });
-    srcs.push("シート·予定"); }).catch(function () {}); });
-  if (S.todos) p = p.then(function () { return getText(S.todos).then(function (t) {
-    state.todos = parseCSV(t).map(function (r) { return { t:r[0], done:/^(y|yes|1|是|完成|完了|済|✓|true)$/i.test((r[1] || "").trim()) }; }).filter(function (x) { return x.t; });
-    srcs.push("シート·ToDo"); }).catch(function () {}); });
-  if (S.reminders) p = p.then(function () { return getText(S.reminders).then(function (t) {
-    state.reminders = parseCSV(t).map(function (r) { return { d:r[0], what:r[1] }; }).filter(function (x) { return x.what; });
-    srcs.push("シート·リマインダー"); }).catch(function () {}); });
+  p = p.then(sheet("events", "シート·予定", function (rows) {          // 列：日付,開始,終了,タイトル,誰
+      state.events = rows.map(function (r) { return { date:r[0], s:r[1], e:r[2], title:r[3], who:r[4] }; }).filter(function (e) { return e.s && e.title; }); }))
+   .then(sheet("todos", "シート·ToDo", function (rows) {               // 列：項目,完了
+      state.todos = rows.map(function (r) { return { t:r[0], done:/^(y|yes|1|是|完成|完了|済|✓|true)$/i.test((r[1] || "").trim()) }; }).filter(function (x) { return x.t; }); }))
+   .then(sheet("reminders", "シート·リマインダー", function (rows) {   // 列：日付,項目
+      state.reminders = rows.map(function (r) { return { d:r[0], what:r[1] }; }).filter(function (x) { return x.what; }); }));
   return p.then(function () {
-    if (srcs.length) { state.src = srcs.join(" / "); var n = new Date(); state.updated = pad(n.getHours()) + ":" + pad(n.getMinutes()); }
+    state.src = srcs.length ? srcs.join(" / ") : "データなし";
+    if (srcs.length) { var n = new Date(); state.updated = pad(n.getHours()) + ":" + pad(n.getMinutes()); }
     renderEvents(); renderTodo(); renderRem(); renderQuote(); renderFooter(); fit();
   });
 }
 function renderFooter() {
-  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.6.1";
+  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.6.2";
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
