@@ -12,25 +12,29 @@
 <style>
   /* ===== Tokens：車のメーターパネル風（深いネイビー + アイスブルーの発光） ===== */
   :root {
-    --bg0:#040A16; --bg1:#081A36; --glow:#0F3A78;
+    /* --- 既定 = blue（冷光・計器ブルー）。他のテンプレートは下の html[data-theme=...] で上書き --- */
+    --bg0:#040A16; --bg1:#081A36; --glow1:30,100,200; --glow2:20,80,170;
     --panelA:rgba(40,100,180,.20); --panelB:rgba(10,32,76,.34); --line:rgba(100,178,255,.28);
-    --ink:#F7FBFF; --ink-2:#BCD0E8; --ink-3:#8299B8; --cyan:#5CD8FF; --amber:#FFC062;
+    --ink:#F7FBFF; --ink-2:#BCD0E8; --ink-3:#8299B8;
+    --acc:#5CD8FF; --acc-rgb:92,216,255; --warn:#FFC062; --warn-rgb:255,192,98; --mute-rgb:141,168,200; --hi-rgb:180,230,255;
+    --cyan:var(--acc); --amber:var(--warn);
     --f-txt:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
     --f-num:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Helvetica Neue",Arial,sans-serif;
     --f-quote:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif;
-    --w-time:400;
+    --f-time:var(--f-num);
+    --w-time:400; --radius:18px; --gap-duo:10px;
   }
   /* 兼容 iOS 12 Safari：不使用 flex 的 gap / inset / aspect-ratio 等新属性 */
   html, body { height:100%; margin:0; background:var(--bg0); }
   body { overflow:hidden; color:var(--ink); font-family:var(--f-txt); font-weight:500;
          background:
-           radial-gradient(1100px 700px at 12% -8%, rgba(30,100,200,.55) 0%, rgba(30,100,200,0) 62%),
-           radial-gradient(900px 700px at 108% 104%, rgba(20,80,170,.50) 0%, rgba(20,80,170,0) 60%),
+           radial-gradient(1100px 700px at 12% -8%, rgba(var(--glow1),.55) 0%, rgba(var(--glow1),0) 62%),
+           radial-gradient(900px 700px at 108% 104%, rgba(var(--glow2),.50) 0%, rgba(var(--glow2),0) 60%),
            linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
          -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; touch-action:manipulation; }
 
   /* 背景のメーター目盛り（装飾） */
-  #bg { position:fixed; left:0; top:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  #bg { position:fixed; left:0; top:0; width:100%; height:100%; z-index:0; pointer-events:none; color:var(--acc); }
   #bg svg { width:100%; height:100%; display:block; }
 
   #stage { position:absolute; z-index:1; left:50%; top:50%; width:1080px; height:1920px; box-sizing:border-box;
@@ -42,46 +46,46 @@
   /* パネル：半透明の青 + 細い発光縁 + 左上のハイライト線 */
   .panel { position:relative; box-sizing:border-box; margin-top:10px; padding:10px 18px 10px;
            background:linear-gradient(180deg, var(--panelA), var(--panelB));
-           border:1px solid var(--line); border-radius:18px; }
+           border:1px solid var(--line); border-radius:var(--radius); }
   .panel::before { content:""; position:absolute; left:20px; top:-1px; width:64px; height:2px; background:var(--cyan);
-                   box-shadow:0 0 10px 1px rgba(79,209,255,.75); }
+                   box-shadow:0 0 10px 1px rgba(var(--acc-rgb),.75); }
   .label { font-size:24px; letter-spacing:.3em; color:var(--ink-2); font-weight:500; margin:0 0 4px; }
 
   .top { display:flex; flex-direction:column; }
   .clock { display:flex; flex-direction:column; padding-bottom:4px; }
-  .time { font-family:var(--f-num); font-weight:var(--w-time); font-size:250px; line-height:.9; letter-spacing:-.02em;
+  .time { font-family:var(--f-time); font-weight:var(--w-time); font-size:250px; line-height:.9; letter-spacing:-.02em;
           font-variant-numeric:tabular-nums; margin-left:-8px; white-space:nowrap;
-          text-shadow:0 0 26px rgba(79,209,255,.38), 0 0 2px rgba(180,230,255,.6); }
+          text-shadow:0 0 26px rgba(var(--acc-rgb),.38), 0 0 2px rgba(var(--hi-rgb),.6); }
   .time .colon { display:inline-block; -webkit-animation:breathe 2s ease-in-out infinite; animation:breathe 2s ease-in-out infinite; }
   @-webkit-keyframes breathe { 50% { opacity:.25; } }
   @keyframes breathe { 50% { opacity:.25; } }
   .date { margin-top:10px; display:flex; align-items:baseline; font-size:72px; line-height:1.1; font-weight:500; white-space:nowrap; }
-  .date .wk { color:var(--cyan); margin-left:22px; text-shadow:0 0 14px rgba(79,209,255,.5); }
+  .date .wk { color:var(--cyan); margin-left:22px; text-shadow:0 0 14px rgba(var(--acc-rgb),.5); }
   .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); font-weight:400; }
   /* 一日の経過メーター（目盛り + 発光バー） */
   .scale { position:relative; height:10px; margin-top:12px; border-radius:5px;
-           background:repeating-linear-gradient(90deg, rgba(141,168,200,.55) 0, rgba(141,168,200,.55) 2px, transparent 2px, transparent 10px); }
+           background:repeating-linear-gradient(90deg, rgba(var(--mute-rgb),.55) 0, rgba(var(--mute-rgb),.55) 2px, transparent 2px, transparent 10px); }
   .scale i { position:absolute; left:0; top:0; height:10px; width:0; border-radius:5px;
-             background:linear-gradient(90deg, rgba(79,209,255,.25), var(--cyan)); box-shadow:0 0 12px rgba(79,209,255,.7); }
+             background:linear-gradient(90deg, rgba(var(--acc-rgb),.25), var(--cyan)); box-shadow:0 0 12px rgba(var(--acc-rgb),.7); }
 
   .wx-now { display:flex; align-items:center; }
   .wx-now svg { width:120px; height:120px; flex:none; margin-right:32px; }
-  .wx-temp { font-family:var(--f-num); font-weight:var(--w-time); font-size:150px; line-height:.9; letter-spacing:-.02em;
-             text-shadow:0 0 22px rgba(79,209,255,.35); }
+  .wx-temp { font-family:var(--f-time); font-weight:var(--w-time); font-size:150px; line-height:.9; letter-spacing:-.02em;
+             text-shadow:0 0 22px rgba(var(--acc-rgb),.35); }
   .wx-temp sup { font-size:.42em; vertical-align:top; position:relative; top:.1em; font-weight:300; }
   .wx-info { margin-left:auto; text-align:right; }
   .wx-info .cond { font-size:52px; }
   .wx-info .rng { margin-top:10px; font-size:38px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
   .wx-info .rng .pop i { font-style:normal; }
 
-  /* 每小时天气 / 降水概率（横スワイプで24時間） */
+  /* 每小时天气 / 降水概率 */
   .hrs { display:flex; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; -ms-overflow-style:none; }
   .hrs::-webkit-scrollbar { display:none; height:0; }
   .hr { flex:0 0 16.6667%; box-sizing:border-box; scroll-snap-align:start; display:flex; flex-direction:column; align-items:center; }
   .hr.day { border-left:1px solid var(--line); }
   .hr .h.nx { color:var(--cyan); }
-  .hscroll { position:relative; height:4px; margin-top:8px; border-radius:2px; background:rgba(141,168,200,.22); }
-  .hscroll i { position:absolute; left:0; top:0; width:25%; height:4px; border-radius:2px; background:var(--cyan); box-shadow:0 0 8px rgba(79,209,255,.7); }
+  .hscroll { position:relative; height:4px; margin-top:8px; border-radius:2px; background:rgba(var(--mute-rgb),.22); }
+  .hscroll i { position:absolute; left:0; top:0; width:25%; height:4px; border-radius:2px; background:var(--cyan); box-shadow:0 0 8px rgba(var(--acc-rgb),.7); }
   .hr > * + * { margin-top:2px; }
   .hr .mid { display:flex; align-items:center; justify-content:center; }
   .hr .h { font-size:32px; line-height:1.2; color:var(--ink-2); font-family:var(--f-num); }
@@ -90,9 +94,9 @@
   .hr .p { font-family:var(--f-num); font-size:32px; line-height:1.2; color:var(--ink-2); font-variant-numeric:tabular-nums; }
   .hr .p.hi { color:var(--amber); }
   .hr .p svg { width:22px; height:22px; margin-right:3px; vertical-align:-2px; }
-  .hr .bar { width:72%; height:6px; margin-top:4px; border-radius:3px; background:rgba(141,168,200,.22); overflow:hidden; }
+  .hr .bar { width:72%; height:6px; margin-top:4px; border-radius:3px; background:rgba(var(--mute-rgb),.22); overflow:hidden; }
   .hr .bar i { display:block; height:6px; border-radius:3px; background:var(--cyan); }
-  .hr .bar.hi i { background:var(--amber); box-shadow:0 0 8px rgba(255,181,71,.8); }
+  .hr .bar.hi i { background:var(--amber); box-shadow:0 0 8px rgba(var(--warn-rgb),.8); }
 
   #schedule { flex:1 0 auto; }
   .ev { display:grid; grid-template-columns:170px 1fr auto; -webkit-box-align:center; align-items:center;
@@ -102,18 +106,18 @@
   .ev .who { font-size:30px; color:var(--ink-2); }
   .ev.past, .ev.past .who { color:var(--ink-3); }
   .ev.now .tm, .ev.next .tm { color:var(--cyan); }
-  .ev.next { background:rgba(79,209,255,.13); box-shadow:inset 0 0 0 1px rgba(79,209,255,.40); }
+  .ev.next { background:rgba(var(--acc-rgb),.13); box-shadow:inset 0 0 0 1px rgba(var(--acc-rgb),.40); }
   .ev .tag { white-space:nowrap; font-size:30px; color:var(--cyan); letter-spacing:.06em; }
   .empty { font-size:38px; color:var(--ink-3); padding:16px 0; }
 
-  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:10px; column-gap:10px; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:var(--gap-duo); column-gap:var(--gap-duo); }
   .duo .panel { margin-top:10px; }
   .todo, .rem { list-style:none; margin:0; padding:0; }
   .todo li, .rem li { display:flex; align-items:center; min-height:54px; font-size:40px; line-height:1.2; }
   .todo li { cursor:pointer; }
   .box { width:34px; height:34px; flex:none; border-radius:50%; border:3px solid var(--ink-2); box-sizing:border-box; position:relative; margin-right:16px; }
   .todo li.done { color:var(--ink-3); text-decoration:line-through; }
-  .todo li.done .box { background:var(--cyan); border-color:var(--cyan); box-shadow:0 0 10px rgba(79,209,255,.7); }
+  .todo li.done .box { background:var(--cyan); border-color:var(--cyan); box-shadow:0 0 10px rgba(var(--acc-rgb),.7); }
   .todo li.done .box::after { content:""; position:absolute; left:9px; top:3px; width:9px; height:16px;
         border:solid var(--bg0); border-width:0 4px 4px 0; -webkit-transform:rotate(45deg); transform:rotate(45deg); }
   .rem li { justify-content:space-between; font-size:38px; }
@@ -122,11 +126,12 @@
 
   /* 今日の名言 */
   .quote { padding-bottom:8px; }
-  .quote .q { margin:0; font-family:var(--f-quote); font-weight:500; font-size:44px; line-height:1.35; text-shadow:0 0 18px rgba(79,209,255,.22); }
+  .quote .q { margin:0; font-family:var(--f-quote); font-weight:500; font-size:44px; line-height:1.35; text-shadow:0 0 18px rgba(var(--acc-rgb),.22); }
   .quote .q.l { font-size:54px; } .quote .q.s { font-size:38px; }
   .quote .qc { margin:4px 0 0; font-size:26px; color:var(--ink-2); font-weight:400; }
 
-  footer { margin-top:8px; font-size:22px; color:var(--ink-3); display:flex; justify-content:space-between; }
+  footer { display:none; margin-top:8px; font-size:22px; color:var(--ink-3); justify-content:space-between; }
+  #stage.info footer { display:flex; }        /* 日付を3回タップ（または URL に ?info）で表示 */
 
   /* ===== 宽屏（iPad 4:3）：天气模块放到时钟右侧 ===== */
   #stage.wide { padding:30px 22px 24px; }
@@ -156,12 +161,44 @@
   #stage.s6 .hr .bar, #stage.s6 .hscroll { display:none; }
   /* 旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠：禁止收缩，溢出交给 fit() 检测 */
   #stage > *, .top > *, .clock > *, #weather > * { flex-shrink:0; }
+
+  /* ===== テンプレート（配色・質感）：blue=冷光 / amber=暖光 / gold=シャンパンゴールド ===== */
+  html[data-theme="amber"] {
+    --bg0:#0B0604; --bg1:#1C0F07; --glow1:205,88,20; --glow2:150,55,10;
+    --panelA:rgba(200,100,30,.18); --panelB:rgba(70,28,8,.42); --line:rgba(255,170,80,.36);
+    --ink:#FFF7EC; --ink-2:#EBD3B6; --ink-3:#B39A7E;
+    --acc:#FFA53A; --acc-rgb:255,165,58; --warn:#7FDBFF; --warn-rgb:127,219,255; --mute-rgb:230,190,150; --hi-rgb:255,220,170;
+    --radius:6px; --w-time:500;
+  }
+  html[data-theme="amber"] .panel::after { content:""; position:absolute; right:20px; bottom:-1px; width:64px; height:2px; background:var(--acc);
+                                           box-shadow:0 0 10px 1px rgba(var(--acc-rgb),.75); }
+  html[data-theme="amber"] .ev.next { border-radius:4px; }
+
+  html[data-theme="gold"] {
+    --bg0:#060606; --bg1:#13110E; --glow1:98,74,34; --glow2:56,40,18;
+    --panelA:rgba(0,0,0,0); --panelB:rgba(0,0,0,0); --line:rgba(233,200,127,.42);
+    --ink:#FBF7EE; --ink-2:#D6C8A8; --ink-3:#9A8D71;
+    --acc:#E9C87F; --acc-rgb:233,200,127; --warn:#9FDDF2; --warn-rgb:159,221,242; --mute-rgb:200,185,150; --hi-rgb:255,240,200;
+    --radius:0px; --gap-duo:36px; --w-time:500;
+    --f-time:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  }
+  html[data-theme="gold"] .panel { background:none; border:none; border-top:1px solid var(--line); border-radius:0; padding-top:14px; }
+  html[data-theme="gold"] .panel::before { left:0; top:-1px; width:88px; height:3px; box-shadow:none; }
+  html[data-theme="gold"] #weather.panel { border-top:none; border-left:1px solid var(--line); padding-left:22px; }
+  html[data-theme="gold"] #weather.panel::before { display:none; }
+  html[data-theme="gold"] .time, html[data-theme="gold"] .wx-temp {
+    background:linear-gradient(180deg, #FFF4D6 0%, #E9C87F 52%, #B48A3F 100%);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:none; }
+  html[data-theme="gold"] .ev.next { border-radius:2px; }
+  html[data-theme="gold"] .time { margin-left:0; padding:.05em .07em .03em .06em; line-height:.95; }   /* 金色グラデ文字は要素外にはみ出た部分が切れるため余白を確保 */
+  html[data-theme="gold"] .time .colon { display:inline; -webkit-animation:none; animation:none; }   /* 透明度アニメがあると背景クリップ文字で冒号が左に二重描画される */
+  html[data-theme="gold"] #bg { opacity:.55; }
 </style>
 </head>
 <body>
 <div id="bg">
   <svg viewBox="0 0 1080 1440" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <g fill="none" stroke="#4FD1FF">
+    <g fill="none" stroke="currentColor">
       <circle cx="1010" cy="1330" r="640" stroke-opacity=".10" stroke-width="20" stroke-dasharray="2 24"/>
       <circle cx="1010" cy="1330" r="604" stroke-opacity=".14" stroke-width="2"/>
       <circle cx="1010" cy="1330" r="520" stroke-opacity=".08" stroke-width="1.5"/>
@@ -200,7 +237,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.6.4</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.0</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -209,15 +246,32 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.6.4";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.0";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
+  theme: "blue",                            // テンプレート：blue（冷光）/ amber（暖光）/ gold（シャンパンゴールド）。data.json の "theme" でも指定可
   dataUrl: "data.json",
   sheets: { events: "", todos: "", reminders: "" },   // 実際の URL は data.json の "sheets" に書く
   refreshMin: 5,
   nightFrom: 22, nightTo: 6
 };
+
+/* ---------- テンプレート選択：URL(?theme=) > この iPad で切替えた値 > data.json > CONFIG ---------- */
+var THEMES = ["blue", "amber", "gold"], dataTheme = null, themeOverride = null, showInfo = /[?&]info\b/.test(location.search);
+function chosenTheme() {
+  var m = location.search.match(/[?&]theme=(\w+)/), t = themeOverride || (m ? m[1] : null);
+  if (!t) { try { t = localStorage.getItem("family-board-theme"); } catch (e) {} }
+  if (!t) t = dataTheme || CONFIG.theme;
+  return THEMES.indexOf(t) >= 0 ? t : "blue";
+}
+function applyTheme() { document.documentElement.setAttribute("data-theme", chosenTheme()); }
+function cycleTheme() {                           // 時計を3回タップで次のテンプレートへ（この iPad に記憶）
+  themeOverride = THEMES[(THEMES.indexOf(chosenTheme()) + 1) % THEMES.length];
+  try { localStorage.setItem("family-board-theme", themeOverride); } catch (e) {}
+  applyTheme(); fit();
+}
+applyTheme();
 
 /* ---------- 字体方案 ---------- */
 var FONTS = {
@@ -346,10 +400,11 @@ function fit() {
   var v = "translate(-50%,-50%) scale(" + s + ")";
   stage.style.webkitTransform = v; stage.style.transform = v;
   var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3", "s4", "s5", "s6"];
-  stage.className = mode;
+  var base = mode + (showInfo ? " info" : "");
+  stage.className = base;
   shrinkTo($("time"), 280, 680); shrinkTo($("date").parentNode, 72, 680);      // 时钟/日期太宽时自动缩小，给右侧天气留位置
   for (var i = 0; i < lv.length; i++) {          // 放不下就依次收起：页脚 → 第4条待办 → 名言出处 → 已过日程 → 名言 → 行距压缩
-    stage.className = mode + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
+    stage.className = base + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
     if (stage.scrollHeight <= H + 1) break;
   }
   try { updateThumb(); } catch (e) {}
@@ -477,11 +532,20 @@ function renderEvents() {
 }
 
 /* ---------- ToDo（タップで完了。この iPad にだけ保存） ---------- */
-var KEY = "family-board-done", doneMap = {};
+var KEY = "family-board-done2", doneMap = {};
 try { doneMap = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+function todoState(x) {                            // この iPad で24時間以内に操作した分をシートより優先
+  var o = doneMap[x.t], now = new Date().getTime();
+  if (o && typeof o === "object" && now - o.t < 864e5) return { d: o.v ? 1 : 0, t: o.t };
+  return { d: x.done ? 1 : 0, t: 0 };
+}
 function renderTodo() {
-  var items = state.todos.map(function (x, i) { return { x:x, i:i, d:(x.done || doneMap[x.t]) ? 1 : 0 }; });
-  items.sort(function (a, b) { return a.d - b.d || a.i - b.i; });          // 未完了 → 完了済みの順
+  var now = new Date().getTime();
+  var items = state.todos.map(function (x, i) {
+    var s = todoState(x), fresh = s.d && s.t && now - s.t < 30 * 60000;   // 完了にしたばかりの項目は30分間その場に残す（消えない）
+    return { x:x, i:i, d:s.d, g:(s.d && !fresh) ? 1 : 0 };
+  });
+  items.sort(function (a, b) { return a.g - b.g || a.i - b.i; });          // 未完了・直近完了 → 以前の完了済み
   items = items.slice(0, 4);
   $("todo").innerHTML = items.length ? items.map(function (o) {
     return '<li class="' + (o.d ? "done" : "") + '" data-i="' + o.i + '"><span class="box"></span><span>' + o.x.t + '</span></li>';
@@ -491,7 +555,7 @@ $("todo").addEventListener("click", function (ev) {
   var li = ev.target; while (li && li.tagName !== "LI") li = li.parentNode;
   if (!li || li.getAttribute("data-i") === null) return;
   var x = state.todos[+li.getAttribute("data-i")]; if (!x) return;
-  doneMap[x.t] = !(x.done || doneMap[x.t]); x.done = false;
+  doneMap[x.t] = { v: !todoState(x).d, t: new Date().getTime() };
   try { localStorage.setItem(KEY, JSON.stringify(doneMap)); } catch (e) {}
   renderTodo();
 });
@@ -542,6 +606,7 @@ function loadData() {
     if (d.events) state.events = d.events;
     if (d.todos) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
     if (d.reminders) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
+    dataTheme = d.theme || null; applyTheme();
     if (d.sheets) for (var k in d.sheets) if (d.sheets[k]) CONFIG.sheets[k] = d.sheets[k];
     if (d.appVersion && d.appVersion !== APP_VERSION && !/[?&]v=/.test(location.search)) { location.replace(location.pathname + "?v=" + d.appVersion); return; }   // 新しい版が出たら自動更新
     state.quote = (d.quote && d.quote.t && d.quoteDate === todayStr()) ? [d.quote.t, d.quote.c || ""] : null;
@@ -572,7 +637,7 @@ function tick() {
   $("wk").textContent = WK[n.getDay()];
   $("greet").textContent = h < 5 ? "夜更けです" : h < 11 ? "おはよう" : h < 18 ? "こんにちは" : "こんばんは";
   $("dayfill").style.width = ((h * 60 + n.getMinutes()) / 14.4).toFixed(1) + "%";
-  var night = h >= CONFIG.nightFrom || h < CONFIG.nightTo;
+  var night = !/[?&]dim=0/.test(location.search) && (h >= CONFIG.nightFrom || h < CONFIG.nightTo);
   $("dim").className = night ? "on" : "";
   if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 2) location.reload();
 }
@@ -580,9 +645,20 @@ function tick() {
 tick(); renderWeather(); renderEvents(); renderTodo(); renderRem(); renderQuote(); renderFooter();
 loadData(); loadWeather();
 setInterval(tick, 1000);
-setInterval(function () { renderEvents(); renderRem(); renderQuote(); renderWeather(); fit(); }, 60000);
+setInterval(function () { renderEvents(); renderTodo(); renderRem(); renderQuote(); renderWeather(); fit(); }, 60000);
 setInterval(loadData, CONFIG.refreshMin * 60000);
 setInterval(loadWeather, 30 * 60000);
+
+/* ジェスチャ：時計を3回タップ＝テンプレート切替 / 日付を3回タップ＝下部の情報行の表示切替 */
+function multiTap(el, n, fn) {
+  var taps = [];
+  el.addEventListener("click", function () {
+    var t = new Date().getTime(); taps = taps.filter(function (x) { return t - x < 1000; }); taps.push(t);
+    if (taps.length >= n) { taps = []; fn(); }
+  });
+}
+multiTap($("time"), 3, cycleTheme);
+multiTap($("date").parentNode, 3, function () { showInfo = !showInfo; fit(); });
 
 try { addEventListener("click", function () { if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(function () {}); }); } catch (e) {}
 </script>
