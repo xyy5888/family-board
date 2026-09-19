@@ -8,117 +8,121 @@
 <meta name="apple-mobile-web-app-title" content="家族ボード">
 <meta name="format-detection" content="telephone=no">
 <title>家族ボード</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Shippori+Mincho:wght@400;500&display=swap">
 <style>
   /* ===== Tokens：单一深色风格 ===== */
   :root {
     --ground:#0F1113; --surface:#181B1E; --line:#2A2E31;
     --ink:#EEEAE3; --ink-2:#9A9C9B; --ink-3:#5F6466; --brass:#D8B67A;
-    --f-num:"Jost","Helvetica Neue",Arial,sans-serif;
-    --f-txt:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+    --f-txt:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+    --f-num:"Zen Kaku Gothic New","Hiragino Sans","Helvetica Neue",Arial,sans-serif;
+    --f-quote:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif;
+    --w-time:300;
   }
   /* 兼容 iOS 12 Safari：不使用 flex 的 gap / inset / aspect-ratio 等新属性 */
   html, body { height:100%; margin:0; background:var(--ground); }
   body { overflow:hidden; color:var(--ink); font-family:var(--f-txt); font-weight:400;
          -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; touch-action:manipulation; }
 
-  /* 9:16 固定舞台 1080×1920，整体等比缩放 */
   #stage { position:absolute; left:50%; top:50%; width:1080px; height:1920px; box-sizing:border-box;
            padding:48px 68px 40px; display:flex; flex-direction:column; transform-origin:center center; }
   #dim { position:fixed; left:0; top:0; right:0; bottom:0; background:#000; opacity:0;
          pointer-events:none; transition:opacity 2s; }
   #dim.on { opacity:.5; }
 
-  .label { font-size:30px; letter-spacing:.28em; color:var(--ink-2); font-weight:500; margin:0 0 10px; }
-  section { border-top:1px solid var(--line); padding-top:24px; }
+  .label { font-size:28px; letter-spacing:.28em; color:var(--ink-2); font-weight:500; margin:0 0 8px; }
+  section { border-top:1px solid var(--line); padding-top:22px; }
 
-  .clock { display:flex; flex-direction:column; padding-bottom:26px; }
-  .time { font-family:var(--f-num); font-weight:200; font-size:230px; line-height:.86; letter-spacing:-.02em;
-          font-variant-numeric:tabular-nums; margin-left:-10px; }
+  .top { display:flex; flex-direction:column; }
+  .clock { display:flex; flex-direction:column; padding-bottom:22px; }
+  .time { font-family:var(--f-num); font-weight:var(--w-time); font-size:250px; line-height:.9; letter-spacing:-.02em;
+          font-variant-numeric:tabular-nums; margin-left:-8px; white-space:nowrap; }
   .time .colon { display:inline-block; -webkit-animation:breathe 2s ease-in-out infinite; animation:breathe 2s ease-in-out infinite; }
   @-webkit-keyframes breathe { 50% { opacity:.25; } }
   @keyframes breathe { 50% { opacity:.25; } }
-  .date { margin-top:22px; display:flex; align-items:baseline; font-size:64px; font-weight:300; }
-  .date .wk { color:var(--brass); margin-left:28px; }
-  .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); }
-
-  .brief { padding-bottom:26px; }
-  .brief p { margin:0; font-size:42px; line-height:1.4; font-weight:300; }
-  .brief b { font-weight:500; color:var(--brass); }
+  .date { margin-top:12px; display:flex; align-items:baseline; font-size:76px; line-height:1.1; font-weight:400; white-space:nowrap; }
+  .date .wk { color:var(--brass); margin-left:24px; }
+  .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); font-weight:300; }
 
   .wx-now { display:flex; align-items:center; }
   .wx-now svg { width:120px; height:120px; flex:none; margin-right:32px; }
-  .wx-temp { font-family:var(--f-num); font-weight:200; font-size:150px; line-height:.9; letter-spacing:-.02em; }
+  .wx-temp { font-family:var(--f-num); font-weight:var(--w-time); font-size:150px; line-height:.9; letter-spacing:-.02em; }
   .wx-temp sup { font-size:.42em; vertical-align:top; position:relative; top:.1em; font-weight:300; }
   .wx-info { margin-left:auto; text-align:right; }
   .wx-info .cond { font-size:52px; }
   .wx-info .rng { margin-top:10px; font-size:38px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
-  .wx-hours { margin-top:18px; display:grid; grid-template-columns:repeat(5,1fr); }
-  .wx-hours div { display:flex; flex-direction:column; align-items:center; }
-  .wx-hours div > * + * { margin-top:8px; }
-  .wx-hours .h { font-family:var(--f-num); font-size:34px; color:var(--ink-2); }
-  .wx-hours svg { width:56px; height:56px; }
-  .wx-hours .t { font-family:var(--f-num); font-size:44px; font-weight:300; }
+  .wx-info .rng .pop i { font-style:normal; }
 
-  #schedule { flex:1; margin-top:26px; }
+  /* 每小时天气 / 降水概率 */
+  .hourly { padding-bottom:12px; }
+  .hrs { display:grid; grid-template-columns:repeat(6,1fr); }
+  .hr { display:flex; flex-direction:column; align-items:center; }
+  .hr > * + * { margin-top:2px; }
+  .hr .mid { display:flex; align-items:center; justify-content:center; }
+  .hr .h { font-size:30px; color:var(--ink-2); font-family:var(--f-num); }
+  .hr .ic svg { width:46px; height:46px; display:block; margin-right:6px; }
+  .hr .t { font-family:var(--f-num); font-size:44px; font-weight:400; line-height:1.1; }
+  .hr .p { font-family:var(--f-num); font-size:30px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .hr .p.hi { color:var(--brass); }
+  .hr .p svg { width:22px; height:22px; margin-right:3px; vertical-align:-2px; }
+
+  #schedule { flex:1; margin-top:0; }
   .ev { display:grid; grid-template-columns:170px 1fr auto; -webkit-box-align:center; align-items:center;
-        min-height:74px; padding:0 22px; margin:0 -22px; border-radius:22px; }
+        min-height:54px; padding:0 22px; margin:0 -22px; border-radius:22px; }
   .ev .tm { font-family:var(--f-num); font-size:44px; font-variant-numeric:tabular-nums; margin-right:20px; }
   .ev .ti { font-size:44px; line-height:1.2; }
-  .ev .who { font-size:32px; color:var(--ink-2); }
+  .ev .who { font-size:30px; color:var(--ink-2); }
   .ev.past, .ev.past .who { color:var(--ink-3); }
   .ev.now .tm, .ev.next .tm { color:var(--brass); }
   .ev.next { background:var(--surface); }
   .ev .tag { white-space:nowrap; font-size:30px; color:var(--brass); letter-spacing:.06em; }
   .empty { font-size:40px; color:var(--ink-3); padding:20px 0; }
 
-  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:56px; column-gap:56px; margin-top:26px; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:56px; column-gap:56px; margin-top:14px; }
   .todo, .rem { list-style:none; margin:0; padding:0; }
-  .todo li, .rem li { display:flex; align-items:center; min-height:70px; font-size:40px; line-height:1.2; }
+  .todo li, .rem li { display:flex; align-items:center; min-height:50px; font-size:40px; line-height:1.2; }
   .todo li { cursor:pointer; }
-  .box { width:38px; height:38px; flex:none; border-radius:50%; border:3px solid var(--ink-2); box-sizing:border-box; position:relative; margin-right:20px; }
+  .box { width:36px; height:36px; flex:none; border-radius:50%; border:3px solid var(--ink-2); box-sizing:border-box; position:relative; margin-right:18px; }
   .todo li.done { color:var(--ink-3); text-decoration:line-through; }
   .todo li.done .box { background:var(--brass); border-color:var(--brass); }
-  .todo li.done .box::after { content:""; position:absolute; left:11px; top:5px; width:9px; height:17px;
+  .todo li.done .box::after { content:""; position:absolute; left:10px; top:4px; width:9px; height:17px;
         border:solid var(--ground); border-width:0 4px 4px 0; -webkit-transform:rotate(45deg); transform:rotate(45deg); }
   .rem li { justify-content:space-between; }
   .rem .what { min-width:0; margin-right:16px; }
   .rem .when { flex:none; font-size:30px; color:var(--brass); letter-spacing:.04em; }
 
-  footer { margin-top:20px; font-size:26px; color:var(--ink-3); display:flex; justify-content:space-between; }
+  /* 今日の名言 */
+  .quote { margin-top:14px; padding-bottom:4px; }
+  .quote .q { margin:0; font-family:var(--f-quote); font-weight:500; font-size:46px; line-height:1.35; }
+  .quote .q.l { font-size:56px; } .quote .q.s { font-size:40px; }
+  .quote .qc { margin:6px 0 0; font-size:28px; color:var(--ink-2); font-weight:300; }
 
-  /* ===== v0.4.1：按屏幕实际比例铺满宽度。wide=iPad(4:3)等，tall=9:16 手机 ===== */
-  .top { display:flex; flex-direction:column; }
-  .time { white-space:nowrap; }
-  .date { font-size:72px; }
-  .wx-info .rng .pop i { font-style:normal; }
-  #stage.wide { padding:40px 56px 32px; }
+  footer { margin-top:10px; font-size:24px; color:var(--ink-3); display:flex; justify-content:space-between; }
+
+  /* ===== 宽屏（iPad 4:3）：天气放到时钟右侧 ===== */
+  #stage.wide { padding:36px 56px 28px; }
   #stage.wide .top { flex-direction:row; align-items:flex-start; }
-  #stage.wide .clock { flex:none; padding-bottom:22px; }
-  #stage.wide .time { font-size:270px; }
-  #stage.wide .date { font-size:80px; margin-top:20px; }
+  #stage.wide .time { font-size:280px; }
+  #stage.wide .clock { padding-bottom:14px; }
+  #stage.wide .clock { flex:none; }
   #stage.wide .date .greet { display:none; }
   #stage.wide #weather { flex:1; min-width:0; border-top:none; padding-top:6px; margin-left:20px; display:flex; flex-direction:column; align-items:flex-end; }
-  #stage.wide #weather .label, #stage.wide .wx-hours { display:none; }
+  #stage.wide #weather .label { display:none; }
   #stage.wide .wx-now { flex-direction:column; align-items:flex-end; }
   #stage.wide .wx-now svg { width:96px; height:96px; margin:0 0 6px 0; }
-  #stage.wide .wx-temp { font-size:120px; }
+  #stage.wide .wx-temp { font-size:124px; }
   #stage.wide .wx-info { margin-left:0; }
-  #stage.wide .wx-info .cond { font-size:34px; }
-  #stage.wide .wx-info .rng { font-size:30px; margin-top:6px; }
+  #stage.wide .wx-info .cond { font-size:38px; }
+  #stage.wide .wx-info .rng { font-size:32px; margin-top:6px; }
   #stage.wide .wx-info .rng .pop { display:block; }
   #stage.wide .wx-info .rng .pop i { display:none; }
-  #stage.wide .brief .label { display:none; }
-  #stage.wide #schedule { margin-top:22px; }
-  #stage.wide .ev { min-height:70px; }
-  #stage.wide .todo li, #stage.wide .rem li { min-height:66px; }
-  #stage.wide .duo { margin-top:22px; }
+
   /* 高度不够时按顺序收起次要内容 */
-  #stage.s1 .brief { display:none; }
+  #stage.s1 footer { display:none; }
   #stage.s2 .todo li:nth-child(4), #stage.s2 .rem li:nth-child(4) { display:none; }
-  #stage.s3 .ev.past { display:none; }
-  /* v0.4.1：旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠，且检测不到溢出。
-     禁止收缩，让溢出被 fit() 正确检测到，再由脚本收起次要内容 */
+  #stage.s3 .quote .qc { display:none; }
+  #stage.s4 .ev.past { display:none; }
+  /* 旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠：禁止收缩，溢出交给 fit() 检测 */
   #stage > *, .top > *, .clock > *, #weather > *, .wx-now > * { flex-shrink:0; }
   #stage > #schedule { flex:1 0 auto; }
 </style>
@@ -126,24 +130,21 @@
 <body>
 <div id="stage">
   <div class="top">
-  <div class="clock">
-    <div class="time" id="time">--<span class="colon">:</span>--</div>
-    <div class="date"><span id="date">-</span><span class="wk" id="wk">-</span><span class="greet" id="greet"></span></div>
-  </div>
-
-  <section id="weather">
-    <h2 class="label" id="wxLabel">天气</h2>
-    <div class="wx-now">
-      <div id="wxIcon"></div>
-      <div class="wx-temp" id="wxTemp">--<sup>°</sup></div>
-      <div class="wx-info"><div class="cond" id="wxCond">-</div><div class="rng" id="wxRng">-</div></div>
+    <div class="clock">
+      <div class="time" id="time">--<span class="colon">:</span>--</div>
+      <div class="date"><span id="date">-</span><span class="wk" id="wk">-</span><span class="greet" id="greet"></span></div>
     </div>
-    <div class="wx-hours" id="wxHours"></div>
-  </section>
+    <section id="weather">
+      <h2 class="label" id="wxLabel">天気</h2>
+      <div class="wx-now">
+        <div id="wxIcon"></div>
+        <div class="wx-temp" id="wxTemp">--<sup>°</sup></div>
+        <div class="wx-info"><div class="cond" id="wxCond">-</div><div class="rng" id="wxRng">-</div></div>
+      </div>
+    </section>
   </div>
 
-  <section class="brief"><h2 class="label">今日のまとめ</h2><p id="brief">…</p></section>
-
+  <section class="hourly"><div class="hrs" id="hrs"></div></section>
 
   <section id="schedule"><h2 class="label">今日の予定</h2><div id="events"></div></section>
 
@@ -152,7 +153,9 @@
     <section><h2 class="label">家族リマインダー</h2><ul class="rem" id="rem"></ul></section>
   </div>
 
-  <footer><span id="ftL">v0.4.1</span><span id="ftR"></span></footer>
+  <section class="quote"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
+
+  <footer><span id="ftL">v0.5</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -162,18 +165,106 @@
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
 var CONFIG = {
-  city: "東京", lat: 35.68, lon: 139.69,
-  dataUrl: "data.json",                 // 同目录下的 data.json（可由日历同步任务生成）
-  sheets: {                             // Google 表格「发布到网络」得到的 CSV 链接，留空则不使用
-    events:    "",
-    todos:     "",
-    reminders: ""
-  },
-  refreshMin: 5,                        // 每几分钟重新取一次数据
-  nightFrom: 22, nightTo: 6             // 夜间自动调暗
+  city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
+  font: "zen",                              // 字体方案：zen / rounded / mincho / noto（也可在网址后加 ?font=rounded 试看）
+  dataUrl: "data.json",
+  sheets: { events: "", todos: "", reminders: "" },
+  refreshMin: 5,
+  nightFrom: 22, nightTo: 6
 };
 
-/* 内置示例（取不到任何数据时显示） */
+/* ---------- 字体方案 ---------- */
+var FONTS = {
+  zen:     { css:"Zen+Kaku+Gothic+New:wght@300;400;500", fam:'"Zen Kaku Gothic New"', wt:300 },
+  rounded: { css:"M+PLUS+Rounded+1c:wght@300;400;500",   fam:'"M PLUS Rounded 1c"',   wt:300 },
+  mincho:  { css:"Shippori+Mincho:wght@400;500;600",     fam:'"Shippori Mincho"',     wt:400 },
+  noto:    { css:"Jost:wght@200;300;400;500&family=Noto+Sans+JP:wght@300;400;500", fam:'"Noto Sans JP"', num:'"Jost"', wt:200 }
+};
+(function () {
+  var m = location.search.match(/[?&]font=(\w+)/), key = (m && FONTS[m[1]]) ? m[1] : CONFIG.font, f = FONTS[key] || FONTS.zen;
+  if (key !== "zen") {
+    var l = document.createElement("link"); l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=" + f.css + "&display=swap"; document.head.appendChild(l);
+  }
+  var tail = ',"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif', st = document.documentElement.style;
+  st.setProperty("--f-txt", f.fam + tail);
+  st.setProperty("--f-num", (f.num || f.fam) + tail);
+  st.setProperty("--w-time", f.wt);
+  if (key === "mincho") st.setProperty("--f-quote", f.fam + ',"Hiragino Mincho ProN","Yu Mincho",serif');
+})();
+
+/* ---------- 今日の名言（日付から自動で1つ選ぶ。data.json の quote で上書き可） ---------- */
+var QUOTES = [
+  ["七転び八起き","何度失敗しても、くじけず立ち上がること"],
+  ["石の上にも三年","辛抱すれば、いつか必ず報われる"],
+  ["古池や蛙飛び込む水の音","松尾芭蕉"],
+  ["継続は力なり","続けることが、やがて大きな力になる"],
+  ["急がば回れ","急ぐときほど、確実な道を選ぶ"],
+  ["雨ニモマケズ 風ニモマケズ","宮沢賢治『雨ニモマケズ』"],
+  ["笑う門には福来る","いつも笑っている家には、幸せがやってくる"],
+  ["一期一会","出会いは一生に一度。その時間を大切に"],
+  ["菜の花や月は東に日は西に","与謝蕪村"],
+  ["温故知新","古きを訪ねて、新しきを知る"],
+  ["情けは人のためならず","人に親切にすれば、巡り巡って自分に返る"],
+  ["春はあけぼの。やうやう白くなりゆく山ぎは","清少納言『枕草子』"],
+  ["塵も積もれば山となる","小さなことも、積み重ねれば大きくなる"],
+  ["千里の道も一歩から","大きな目標も、最初の一歩から始まる"],
+  ["閑さや岩にしみ入る蝉の声","松尾芭蕉"],
+  ["果報は寝て待て","焦らず、良い知らせを待つのがよい"],
+  ["失敗は成功のもと","失敗から学べば、次の成功につながる"],
+  ["天は人の上に人を造らず","福沢諭吉『学問のすゝめ』"],
+  ["十人十色","考え方や好みは、人それぞれ違う"],
+  ["案ずるより産むが易し","心配するより、やってみれば意外と簡単"],
+  ["雀の子そこのけそこのけお馬が通る","小林一茶"],
+  ["縁の下の力持ち","目立たない所で、人を支える人"],
+  ["早起きは三文の徳","朝早く起きると、何かしら良いことがある"],
+  ["ゆく河の流れは絶えずして","鴨長明『方丈記』"],
+  ["初心忘るべからず","始めた頃の謙虚な気持ちを忘れない"],
+  ["思い立ったが吉日","思いついた日が、始めるのに最良の日"],
+  ["柿くへば鐘が鳴るなり法隆寺","正岡子規"],
+  ["好きこそものの上手なれ","好きなことは、自然と上達する"],
+  ["三人寄れば文殊の知恵","皆で考えれば、良い知恵が出る"],
+  ["国境の長いトンネルを抜けると雪国であった。","川端康成『雪国』"],
+  ["善は急げ","良いと思ったことは、ためらわず実行する"],
+  ["百聞は一見に如かず","何度聞くより、一度見るほうが確か"],
+  ["目には青葉山ほととぎす初鰹","山口素堂"],
+  ["雨降って地固まる","争いのあとは、かえって関係が良くなる"],
+  ["実るほど頭を垂れる稲穂かな","立派な人ほど、謙虚である"],
+  ["祇園精舎の鐘の声、諸行無常の響きあり","『平家物語』"],
+  ["転ばぬ先の杖","失敗しないよう、前もって用意しておく"],
+  ["五月雨をあつめて早し最上川","松尾芭蕉"],
+  ["鉄は熱いうちに打て","物事は、時期を逃さず行うのがよい"],
+  ["芸は身を助く","身につけた技能は、いざというとき自分を助ける"],
+  ["吾輩は猫である。名前はまだ無い。","夏目漱石『吾輩は猫である』"],
+  ["玉磨かざれば光なし","素質があっても、努力しなければ才能は開かない"],
+  ["春の海ひねもすのたりのたりかな","与謝蕪村"],
+  ["塞翁が馬","幸不幸は予測できない。一喜一憂しない"],
+  ["習うより慣れよ","学ぶより、実際にやって身につける"],
+  ["分け入つても分け入つても青い山","種田山頭火"],
+  ["以心伝心","言葉にしなくても、心が通じ合う"],
+  ["棚から牡丹餅","思いがけない幸運が舞い込む"],
+  ["夏草や兵どもが夢の跡","松尾芭蕉"],
+  ["切磋琢磨","仲間と励まし合い、共に向上する"],
+  ["石橋を叩いて渡る","用心深く確かめてから行動する"],
+  ["朝顔に釣瓶とられてもらひ水","加賀千代女"],
+  ["日進月歩","絶え間なく、どんどん進歩する"],
+  ["腹八分目に医者いらず","食べ過ぎないことが、健康の秘訣"],
+  ["荒海や佐渡によこたふ天河","松尾芭蕉"],
+  ["心機一転","あることをきっかけに、気持ちを入れ替える"],
+  ["山椒は小粒でもぴりりと辛い","体は小さくても、能力は優れている"],
+  ["木曾路はすべて山の中である。","島崎藤村『夜明け前』"],
+  ["有言実行","口にしたことは、必ず実行する"],
+  ["旅に病んで夢は枯野をかけ廻る","松尾芭蕉"],
+  ["花鳥風月","自然の美しい風物を味わう心"],
+  ["メロスは激怒した。","太宰治『走れメロス』"],
+  ["不撓不屈","困難にくじけず、意志を貫く"],
+  ["名月をとってくれろと泣く子かな","小林一茶"],
+  ["捲土重来","一度敗れても、勢いを盛り返して再び挑む"],
+  ["春眠暁を覚えず","春は心地よくて、夜明けにも気づかず眠ってしまう"],
+  ["花の雲鐘は上野か浅草か","松尾芭蕉"]
+];
+
+/* 内置示例 */
 var state = {
   events: [
     { s:"09:30", e:"10:30", title:"ヨガ教室", who:"ママ" },
@@ -186,7 +277,7 @@ var state = {
     { d:"明日", what:"可燃ごみの日" }, { d:"月曜", what:"敬老の日・電話する" },
     { d:"9/25", what:"光熱費の支払期限" }, { d:"9/30", what:"健診結果の受取" }
   ],
-  brief: "", src: "サンプルデータ", updated: ""
+  quote: null, src: "サンプルデータ", updated: ""
 };
 
 /* ---------- 工具 ---------- */
@@ -197,7 +288,6 @@ function fmtMin(m) { return pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60); }
 var WK = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
 var WKS = ["日曜","月曜","火曜","水曜","木曜","金曜","土曜"];
 function todayStr() { var n = new Date(); return n.getFullYear() + "-" + pad(n.getMonth() + 1) + "-" + pad(n.getDate()); }
-/* 解析 2026-09-19 / 2026/9/19 / 9/19 → Date(当天0点)；无法解析返回 null */
 function parseDate(s) {
   var m = String(s || "").trim().match(/^(?:(\d{4})[-\/])?(\d{1,2})[-\/](\d{1,2})$/);
   if (!m) return null;
@@ -205,21 +295,34 @@ function parseDate(s) {
 }
 function dayDiff(d) { var n = new Date(); var t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()); return Math.round((d - t0) / 864e5); }
 
+/* 宽屏时：若元素内容宽度超过 max，按比例缩小字号（el.style.fontSize），否则恢复默认 */
+function shrinkTo(el, base, max) {
+  if (el.className.indexOf("date") < 0 && el.id !== "time") return;
+  el.style.fontSize = "";
+  if (stage.className.indexOf("wide") < 0) return;
+  var w = el.id === "time" ? el.scrollWidth : $("date").offsetWidth + $("wk").offsetWidth + 24;
+  if (w > max) el.style.fontSize = Math.floor(base * max / w) + "px";
+}
+
 /* ---------- 舞台：宽度固定 1080、铺满屏幕宽度，高度随屏幕比例变化 ---------- */
 var stage = $("stage");
 function fit() {
   var s = innerWidth / 1080, H = innerHeight / s;
-  if (H < 1300) { H = 1300; s = Math.min(s, innerHeight / 1300); }      // 太扁（横屏）时按 1300 高度留边
+  if (H < 1300) { H = 1300; s = Math.min(s, innerHeight / 1300); }
   stage.style.height = H + "px";
   var v = "translate(-50%,-50%) scale(" + s + ")";
   stage.style.webkitTransform = v; stage.style.transform = v;
-  var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3"];
-  for (var i = 0; i < lv.length; i++) {                                   // 放不下就依次收起：简报 → 第4条待办 → 已过日程
-    stage.className = mode + " " + lv[i];
+  var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3", "s4"];
+  stage.className = mode;
+  shrinkTo($("time"), 280, 640); shrinkTo($("date").parentNode, 76, 640);      // 时钟/日期太宽（字体不同）时自动缩小，给右侧天气留位置
+  for (var i = 0; i < lv.length; i++) {          // 放不下就依次收起：页脚 → 第4条待办 → 名言出处 → 已过日程
+    stage.className = mode + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
     if (stage.scrollHeight <= H + 1) break;
   }
 }
 addEventListener("resize", fit); addEventListener("orientationchange", fit); addEventListener("load", fit); fit();
+try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit); } catch (e) {}
+setTimeout(fit, 1500); setTimeout(fit, 4000);   // 网络字体晚到时重新排版
 
 /* ---------- 天气图标 ---------- */
 var P = {
@@ -231,6 +334,7 @@ var P = {
   snow: '<path d="M18 36h27a9 9 0 0 0 1.5-17.9A14 14 0 0 0 19.3 20 8 8 0 0 0 18 36z"/><path d="M24 45v.1M34 45v.1M44 45v.1M29 53v.1M39 53v.1"/>'
 };
 function icon(k) { return '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">' + P[k] + '</svg>'; }
+var DROP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-6.5 6-11z"/></svg>';
 function wmo(c) {
   if (c === 0) return ["sun","晴れ"];
   if (c <= 2) return ["part","晴れ時々くもり"];
@@ -241,20 +345,20 @@ function wmo(c) {
   return ["thun","雷雨"];
 }
 
-/* ---------- 天气（Open-Meteo，失败则显示示例） ---------- */
+/* ---------- 天气（Open-Meteo，稲城市の座標。失敗時はサンプル表示） ---------- */
 var weather = { live:false, temp:26, code:2, hi:29, lo:21, pop:60,
-  hours:[[0,26,2],[3,28,0],[6,27,3],[8,24,61],[11,22,3]] };
+  hours:[[0,26,2,10],[1,27,2,10],[2,28,0,20],[3,28,3,40],[4,27,61,60],[5,25,61,70]] };   // [何時間後, 気温, コード, 降水確率]
 function loadWeather() {
   var u = "https://api.open-meteo.com/v1/forecast?latitude=" + CONFIG.lat + "&longitude=" + CONFIG.lon +
-    "&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code" +
+    "&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability" +
     "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=2";
   return fetch(u).then(function (r) { return r.json(); }).then(function (j) {
     var i = new Date().getHours();
     weather = { live:true, temp:Math.round(j.current.temperature_2m), code:j.current.weather_code,
       hi:Math.round(j.daily.temperature_2m_max[0]), lo:Math.round(j.daily.temperature_2m_min[0]),
       pop:j.daily.precipitation_probability_max[0],
-      hours:[0,3,6,9,12].map(function (d) { return [d, Math.round(j.hourly.temperature_2m[i + d]), j.hourly.weather_code[i + d]]; }) };
-  }).catch(function () {}).then(function () { renderWeather(); renderBrief(); renderFooter(); fit(); });
+      hours:[0,1,2,3,4,5].map(function (d) { return [d, Math.round(j.hourly.temperature_2m[i + d]), j.hourly.weather_code[i + d], j.hourly.precipitation_probability[i + d]]; }) };
+  }).catch(function () {}).then(function () { renderWeather(); renderFooter(); fit(); });
 }
 function renderWeather() {
   var w = wmo(weather.code), h0 = new Date().getHours();
@@ -263,22 +367,30 @@ function renderWeather() {
   $("wxTemp").innerHTML = weather.temp + "<sup>°</sup>";
   $("wxCond").textContent = w[1];
   $("wxRng").innerHTML = weather.hi + "° / " + weather.lo + "°<span class=\"pop\"><i>  ·  </i>降水 " + weather.pop + "%</span>";
-  $("wxHours").innerHTML = weather.hours.map(function (x) {
-    return '<div><span class="h">' + (x[0] === 0 ? "現在" : pad((h0 + x[0]) % 24) + "時") + '</span>' + icon(wmo(x[2])[0]) + '<span class="t">' + x[1] + '°</span></div>';
+  $("hrs").innerHTML = weather.hours.map(function (x) {
+    return '<div class="hr"><span class="h">' + (x[0] === 0 ? "現在" : pad((h0 + x[0]) % 24) + "時") + '</span><span class="mid"><span class="ic">' + icon(wmo(x[2])[0]) +
+           '</span><span class="t">' + x[1] + '°</span></span><span class="p' + (x[3] >= 50 ? " hi" : "") + '">' + DROP + x[3] + '%</span></div>';
   }).join("");
+}
+
+/* ---------- 今日の名言 ---------- */
+function renderQuote() {
+  var d = new Date(), n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+  var q = state.quote || QUOTES[n % QUOTES.length], len = q[0].length;
+  $("qText").className = "q" + (len <= 12 ? " l" : len > 20 ? " s" : "");
+  $("qText").textContent = q[0];
+  $("qCap").textContent = q[1];
 }
 
 /* ---------- 日程 ---------- */
 function todaysEvents() {
-  var td = todayStr();
-  var list = state.events.filter(function (e) {
+  return state.events.filter(function (e) {
     if (!e.date) return true;
     var d = parseDate(e.date); return d && dayDiff(d) === 0;
   }).map(function (e) {
     var s = toMin(e.s), en = e.e ? toMin(e.e) : s + 60;
     return { s:s, e:en, title:e.title, who:e.who || "" };
   }).sort(function (a, b) { return a.s - b.s; });
-  return list;
 }
 function renderEvents() {
   var n = new Date(), now = n.getHours() * 60 + n.getMinutes();
@@ -300,18 +412,7 @@ function renderEvents() {
   }).join("");
 }
 
-/* ---------- 简报：data.json 里有当天的 AI 简报就用它，否则按规则拼 ---------- */
-function renderBrief() {
-  if (state.brief) { $("brief").innerHTML = state.brief; return; }
-  var n = new Date(), now = n.getHours() * 60 + n.getMinutes(), w = wmo(weather.code);
-  var s = "今日は<b>" + weather.lo + "–" + weather.hi + "°C</b>" +
-          (weather.pop >= 50 ? "、降水確率 " + weather.pop + "%、<b>傘を持って</b>。" : "、過ごしやすい一日。");
-  var nx = todaysEvents().filter(function (e) { return e.s > now; })[0];
-  s += nx ? "次は<b>" + fmtMin(nx.s) + " " + nx.title + "</b>。" : "今日の予定は全部おわり。";
-  $("brief").innerHTML = s;
-}
-
-/* ---------- 待办（点击勾选只记在这台 iPad 本地） ---------- */
+/* ---------- ToDo（タップで完了。この iPad にだけ保存） ---------- */
 var KEY = "family-board-done", doneMap = {};
 try { doneMap = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
 function renderTodo() {
@@ -330,7 +431,7 @@ $("todo").addEventListener("click", function (ev) {
   renderTodo();
 });
 
-/* ---------- 家庭提醒：日期自动换成 今天/明天/周X/M/D，过期的自动隐藏 ---------- */
+/* ---------- 家族リマインダー：日付は 今日/明日/曜日/M/D に自動変換、過ぎたものは非表示 ---------- */
 function whenLabel(x) {
   var d = parseDate(x.d); if (!d) return { text:x.d, key:-1, keep:true };
   var diff = dayDiff(d);
@@ -345,7 +446,7 @@ function renderRem() {
   }).join("") : '<li style="color:var(--ink-3)">リマインダーはありません</li>';
 }
 
-/* ---------- 数据加载：data.json 与 Google 表格 ---------- */
+/* ---------- データ読み込み：data.json と Google スプレッドシート ---------- */
 function parseCSV(t) {
   var rows = [], row = [], f = "", q = false, i, c;
   for (i = 0; i < t.length; i++) {
@@ -357,7 +458,7 @@ function parseCSV(t) {
     else f += c;
   }
   if (f || row.length) { row.push(f); rows.push(row); }
-  return rows.slice(1).filter(function (r) { return r.some(function (x) { return x.trim(); }); });   // 去掉表头与空行
+  return rows.slice(1).filter(function (r) { return r.some(function (x) { return x.trim(); }); });
 }
 function getText(url) {
   return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now()).then(function (r) { if (!r.ok) throw 0; return r.text(); });
@@ -369,30 +470,30 @@ function loadData() {
     if (d.events) state.events = d.events;
     if (d.todos) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
     if (d.reminders) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
-    state.brief = (d.brief && d.briefDate === todayStr()) ? d.brief : "";
+    state.quote = (d.quote && d.quote.t && d.quoteDate === todayStr()) ? [d.quote.t, d.quote.c || ""] : null;
     srcs.push("data.json");
   }).catch(function () {});
   var S = CONFIG.sheets;
-  if (S.events) p = p.then(function () { return getText(S.events).then(function (t) {   // 列：日期,开始,结束,标题,谁
+  if (S.events) p = p.then(function () { return getText(S.events).then(function (t) {
     state.events = parseCSV(t).map(function (r) { return { date:r[0], s:r[1], e:r[2], title:r[3], who:r[4] }; }).filter(function (e) { return e.s && e.title; });
     srcs.push("シート·予定"); }).catch(function () {}); });
-  if (S.todos) p = p.then(function () { return getText(S.todos).then(function (t) {     // 列：事项,完成
+  if (S.todos) p = p.then(function () { return getText(S.todos).then(function (t) {
     state.todos = parseCSV(t).map(function (r) { return { t:r[0], done:/^(y|yes|1|是|完成|完了|済|✓|true)$/i.test((r[1] || "").trim()) }; }).filter(function (x) { return x.t; });
     srcs.push("シート·ToDo"); }).catch(function () {}); });
-  if (S.reminders) p = p.then(function () { return getText(S.reminders).then(function (t) { // 列：日期,事项
+  if (S.reminders) p = p.then(function () { return getText(S.reminders).then(function (t) {
     state.reminders = parseCSV(t).map(function (r) { return { d:r[0], what:r[1] }; }).filter(function (x) { return x.what; });
     srcs.push("シート·リマインダー"); }).catch(function () {}); });
   return p.then(function () {
     if (srcs.length) { state.src = srcs.join(" / "); var n = new Date(); state.updated = pad(n.getHours()) + ":" + pad(n.getMinutes()); }
-    renderEvents(); renderTodo(); renderRem(); renderBrief(); renderFooter(); fit();
+    renderEvents(); renderTodo(); renderRem(); renderQuote(); renderFooter(); fit();
   });
 }
 function renderFooter() {
-  $("ftL").textContent = "v0.4.1 · 天気" + (weather.live ? "ライブ" : "サンプル");
+  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.5";
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
-/* ---------- 时钟 / 日期 / 夜间调暗 / 每日 3 点整页刷新 ---------- */
+/* ---------- 時計 / 日付 / 夜間減光 / 毎日3時に再読込 ---------- */
 function tick() {
   var n = new Date(), h = n.getHours();
   $("time").innerHTML = pad(h) + '<span class="colon">:</span>' + pad(n.getMinutes());
@@ -401,17 +502,16 @@ function tick() {
   $("greet").textContent = h < 5 ? "夜更けです" : h < 11 ? "おはよう" : h < 18 ? "こんにちは" : "こんばんは";
   var night = h >= CONFIG.nightFrom || h < CONFIG.nightTo;
   $("dim").className = night ? "on" : "";
-  if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 2) location.reload();   // 旧 iPad 长时间运行防卡顿
+  if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 2) location.reload();
 }
 
-tick(); renderWeather(); renderEvents(); renderTodo(); renderRem(); renderBrief(); renderFooter();
+tick(); renderWeather(); renderEvents(); renderTodo(); renderRem(); renderQuote(); renderFooter();
 loadData(); loadWeather();
 setInterval(tick, 1000);
-setInterval(function () { renderEvents(); renderRem(); renderBrief(); fit(); }, 60000);
+setInterval(function () { renderEvents(); renderRem(); renderQuote(); renderWeather(); fit(); }, 60000);
 setInterval(loadData, CONFIG.refreshMin * 60000);
 setInterval(loadWeather, 30 * 60000);
 
-/* 新系统可用的屏幕常亮（iOS 12 没有，会被忽略；请在设置里把自动锁定设为永不） */
 try { addEventListener("click", function () { if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(function () {}); }); } catch (e) {}
 </script>
 </body>
