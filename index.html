@@ -8,45 +8,66 @@
 <meta name="apple-mobile-web-app-title" content="家族ボード">
 <meta name="format-detection" content="telephone=no">
 <title>家族ボード</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Shippori+Mincho:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500&family=Shippori+Mincho:wght@400;500&display=swap">
 <style>
-  /* ===== Tokens：单一深色风格 ===== */
+  /* ===== Tokens：車のメーターパネル風（深いネイビー + アイスブルーの発光） ===== */
   :root {
-    --ground:#0F1113; --surface:#181B1E; --line:#2A2E31;
-    --ink:#EEEAE3; --ink-2:#9A9C9B; --ink-3:#5F6466; --brass:#D8B67A;
-    --f-txt:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
-    --f-num:"Zen Kaku Gothic New","Hiragino Sans","Helvetica Neue",Arial,sans-serif;
+    --bg0:#040A16; --bg1:#081A36; --glow:#0F3A78;
+    --panelA:rgba(40,100,180,.20); --panelB:rgba(10,32,76,.34); --line:rgba(100,178,255,.28);
+    --ink:#EAF4FF; --ink-2:#8DA8C8; --ink-3:#4E6683; --cyan:#4FD1FF; --amber:#FFB547;
+    --f-txt:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+    --f-num:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Helvetica Neue",Arial,sans-serif;
     --f-quote:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif;
     --w-time:300;
   }
   /* 兼容 iOS 12 Safari：不使用 flex 的 gap / inset / aspect-ratio 等新属性 */
-  html, body { height:100%; margin:0; background:var(--ground); }
+  html, body { height:100%; margin:0; background:var(--bg0); }
   body { overflow:hidden; color:var(--ink); font-family:var(--f-txt); font-weight:400;
+         background:
+           radial-gradient(1100px 700px at 12% -8%, rgba(30,100,200,.55) 0%, rgba(30,100,200,0) 62%),
+           radial-gradient(900px 700px at 108% 104%, rgba(20,80,170,.50) 0%, rgba(20,80,170,0) 60%),
+           linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
          -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; touch-action:manipulation; }
 
-  #stage { position:absolute; left:50%; top:50%; width:1080px; height:1920px; box-sizing:border-box;
+  /* 背景のメーター目盛り（装飾） */
+  #bg { position:fixed; left:0; top:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  #bg svg { width:100%; height:100%; display:block; }
+
+  #stage { position:absolute; z-index:1; left:50%; top:50%; width:1080px; height:1920px; box-sizing:border-box;
            padding:48px 68px 40px; display:flex; flex-direction:column; transform-origin:center center; }
-  #dim { position:fixed; left:0; top:0; right:0; bottom:0; background:#000; opacity:0;
+  #dim { position:fixed; z-index:5; left:0; top:0; right:0; bottom:0; background:#000; opacity:0;
          pointer-events:none; transition:opacity 2s; }
   #dim.on { opacity:.5; }
 
-  .label { font-size:28px; letter-spacing:.28em; color:var(--ink-2); font-weight:500; margin:0 0 8px; }
-  section { border-top:1px solid var(--line); padding-top:22px; }
+  /* パネル：半透明の青 + 細い発光縁 + 左上のハイライト線 */
+  .panel { position:relative; box-sizing:border-box; margin-top:10px; padding:10px 18px 10px;
+           background:linear-gradient(180deg, var(--panelA), var(--panelB));
+           border:1px solid var(--line); border-radius:18px; }
+  .panel::before { content:""; position:absolute; left:20px; top:-1px; width:64px; height:2px; background:var(--cyan);
+                   box-shadow:0 0 10px 1px rgba(79,209,255,.75); }
+  .label { font-size:24px; letter-spacing:.3em; color:var(--ink-2); font-weight:500; margin:0 0 4px; }
 
   .top { display:flex; flex-direction:column; }
-  .clock { display:flex; flex-direction:column; padding-bottom:22px; }
+  .clock { display:flex; flex-direction:column; padding-bottom:4px; }
   .time { font-family:var(--f-num); font-weight:var(--w-time); font-size:250px; line-height:.9; letter-spacing:-.02em;
-          font-variant-numeric:tabular-nums; margin-left:-8px; white-space:nowrap; }
+          font-variant-numeric:tabular-nums; margin-left:-8px; white-space:nowrap;
+          text-shadow:0 0 26px rgba(79,209,255,.38), 0 0 2px rgba(180,230,255,.6); }
   .time .colon { display:inline-block; -webkit-animation:breathe 2s ease-in-out infinite; animation:breathe 2s ease-in-out infinite; }
   @-webkit-keyframes breathe { 50% { opacity:.25; } }
   @keyframes breathe { 50% { opacity:.25; } }
-  .date { margin-top:12px; display:flex; align-items:baseline; font-size:76px; line-height:1.1; font-weight:400; white-space:nowrap; }
-  .date .wk { color:var(--brass); margin-left:24px; }
+  .date { margin-top:10px; display:flex; align-items:baseline; font-size:72px; line-height:1.1; font-weight:400; white-space:nowrap; }
+  .date .wk { color:var(--cyan); margin-left:22px; text-shadow:0 0 14px rgba(79,209,255,.5); }
   .date .greet { margin-left:auto; font-size:40px; color:var(--ink-2); font-weight:300; }
+  /* 一日の経過メーター（目盛り + 発光バー） */
+  .scale { position:relative; height:10px; margin-top:12px; border-radius:5px;
+           background:repeating-linear-gradient(90deg, rgba(141,168,200,.55) 0, rgba(141,168,200,.55) 2px, transparent 2px, transparent 10px); }
+  .scale i { position:absolute; left:0; top:0; height:10px; width:0; border-radius:5px;
+             background:linear-gradient(90deg, rgba(79,209,255,.25), var(--cyan)); box-shadow:0 0 12px rgba(79,209,255,.7); }
 
   .wx-now { display:flex; align-items:center; }
   .wx-now svg { width:120px; height:120px; flex:none; margin-right:32px; }
-  .wx-temp { font-family:var(--f-num); font-weight:var(--w-time); font-size:150px; line-height:.9; letter-spacing:-.02em; }
+  .wx-temp { font-family:var(--f-num); font-weight:var(--w-time); font-size:150px; line-height:.9; letter-spacing:-.02em;
+             text-shadow:0 0 22px rgba(79,209,255,.35); }
   .wx-temp sup { font-size:.42em; vertical-align:top; position:relative; top:.1em; font-weight:300; }
   .wx-info { margin-left:auto; text-align:right; }
   .wx-info .cond { font-size:52px; }
@@ -54,87 +75,102 @@
   .wx-info .rng .pop i { font-style:normal; }
 
   /* 每小时天气 / 降水概率 */
-  .hourly { padding-bottom:12px; }
   .hrs { display:grid; grid-template-columns:repeat(6,1fr); }
   .hr { display:flex; flex-direction:column; align-items:center; }
   .hr > * + * { margin-top:2px; }
   .hr .mid { display:flex; align-items:center; justify-content:center; }
-  .hr .h { font-size:30px; color:var(--ink-2); font-family:var(--f-num); }
-  .hr .ic svg { width:46px; height:46px; display:block; margin-right:6px; }
-  .hr .t { font-family:var(--f-num); font-size:44px; font-weight:400; line-height:1.1; }
-  .hr .p { font-family:var(--f-num); font-size:30px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
-  .hr .p.hi { color:var(--brass); }
+  .hr .h { font-size:32px; line-height:1.2; color:var(--ink-2); font-family:var(--f-num); }
+  .hr .ic svg { width:48px; height:48px; display:block; margin-right:6px; }
+  .hr .t { font-family:var(--f-num); font-size:46px; font-weight:400; line-height:1.1; }
+  .hr .p { font-family:var(--f-num); font-size:32px; line-height:1.2; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .hr .p.hi { color:var(--amber); }
   .hr .p svg { width:22px; height:22px; margin-right:3px; vertical-align:-2px; }
+  .hr .bar { width:72%; height:6px; margin-top:4px; border-radius:3px; background:rgba(141,168,200,.22); overflow:hidden; }
+  .hr .bar i { display:block; height:6px; border-radius:3px; background:var(--cyan); }
+  .hr .bar.hi i { background:var(--amber); box-shadow:0 0 8px rgba(255,181,71,.8); }
 
-  #schedule { flex:1; margin-top:0; }
+  #schedule { flex:1 0 auto; }
   .ev { display:grid; grid-template-columns:170px 1fr auto; -webkit-box-align:center; align-items:center;
-        min-height:54px; padding:0 22px; margin:0 -22px; border-radius:22px; }
-  .ev .tm { font-family:var(--f-num); font-size:44px; font-variant-numeric:tabular-nums; margin-right:20px; }
-  .ev .ti { font-size:44px; line-height:1.2; }
+        min-height:62px; padding:0 12px; margin:0 -12px; border-radius:14px; }
+  .ev .tm { font-family:var(--f-num); font-size:46px; font-variant-numeric:tabular-nums; margin-right:20px; }
+  .ev .ti { font-size:46px; line-height:1.2; }
   .ev .who { font-size:30px; color:var(--ink-2); }
   .ev.past, .ev.past .who { color:var(--ink-3); }
-  .ev.now .tm, .ev.next .tm { color:var(--brass); }
-  .ev.next { background:var(--surface); }
-  .ev .tag { white-space:nowrap; font-size:30px; color:var(--brass); letter-spacing:.06em; }
-  .empty { font-size:40px; color:var(--ink-3); padding:20px 0; }
+  .ev.now .tm, .ev.next .tm { color:var(--cyan); }
+  .ev.next { background:rgba(79,209,255,.13); box-shadow:inset 0 0 0 1px rgba(79,209,255,.40); }
+  .ev .tag { white-space:nowrap; font-size:30px; color:var(--cyan); letter-spacing:.06em; }
+  .empty { font-size:38px; color:var(--ink-3); padding:16px 0; }
 
-  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:56px; column-gap:56px; margin-top:14px; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; grid-column-gap:10px; column-gap:10px; }
+  .duo .panel { margin-top:10px; }
   .todo, .rem { list-style:none; margin:0; padding:0; }
-  .todo li, .rem li { display:flex; align-items:center; min-height:50px; font-size:40px; line-height:1.2; }
+  .todo li, .rem li { display:flex; align-items:center; min-height:54px; font-size:40px; line-height:1.2; }
   .todo li { cursor:pointer; }
-  .box { width:36px; height:36px; flex:none; border-radius:50%; border:3px solid var(--ink-2); box-sizing:border-box; position:relative; margin-right:18px; }
+  .box { width:34px; height:34px; flex:none; border-radius:50%; border:3px solid var(--ink-2); box-sizing:border-box; position:relative; margin-right:16px; }
   .todo li.done { color:var(--ink-3); text-decoration:line-through; }
-  .todo li.done .box { background:var(--brass); border-color:var(--brass); }
-  .todo li.done .box::after { content:""; position:absolute; left:10px; top:4px; width:9px; height:17px;
-        border:solid var(--ground); border-width:0 4px 4px 0; -webkit-transform:rotate(45deg); transform:rotate(45deg); }
-  .rem li { justify-content:space-between; }
-  .rem .what { min-width:0; margin-right:16px; }
-  .rem .when { flex:none; font-size:30px; color:var(--brass); letter-spacing:.04em; }
+  .todo li.done .box { background:var(--cyan); border-color:var(--cyan); box-shadow:0 0 10px rgba(79,209,255,.7); }
+  .todo li.done .box::after { content:""; position:absolute; left:9px; top:3px; width:9px; height:16px;
+        border:solid var(--bg0); border-width:0 4px 4px 0; -webkit-transform:rotate(45deg); transform:rotate(45deg); }
+  .rem li { justify-content:space-between; font-size:38px; }
+  .rem .what { min-width:0; margin-right:12px; }
+  .rem .when { flex:none; font-size:28px; color:var(--cyan); letter-spacing:.04em; }
 
   /* 今日の名言 */
-  .quote { margin-top:14px; padding-bottom:4px; }
-  .quote .q { margin:0; font-family:var(--f-quote); font-weight:500; font-size:46px; line-height:1.35; }
-  .quote .q.l { font-size:56px; } .quote .q.s { font-size:40px; }
-  .quote .qc { margin:6px 0 0; font-size:28px; color:var(--ink-2); font-weight:300; }
+  .quote { padding-bottom:8px; }
+  .quote .q { margin:0; font-family:var(--f-quote); font-weight:500; font-size:44px; line-height:1.35; text-shadow:0 0 18px rgba(79,209,255,.22); }
+  .quote .q.l { font-size:54px; } .quote .q.s { font-size:38px; }
+  .quote .qc { margin:4px 0 0; font-size:26px; color:var(--ink-2); font-weight:300; }
 
-  footer { margin-top:10px; font-size:24px; color:var(--ink-3); display:flex; justify-content:space-between; }
+  footer { margin-top:8px; font-size:22px; color:var(--ink-3); display:flex; justify-content:space-between; }
 
-  /* ===== 宽屏（iPad 4:3）：天气放到时钟右侧 ===== */
-  #stage.wide { padding:36px 56px 28px; }
-  #stage.wide .top { flex-direction:row; align-items:flex-start; }
+  /* ===== 宽屏（iPad 4:3）：天气模块放到时钟右侧 ===== */
+  #stage.wide { padding:34px 52px 26px; }
+  #stage.wide .top { flex-direction:row; align-items:stretch; }
   #stage.wide .time { font-size:280px; }
-  #stage.wide .clock { padding-bottom:14px; }
   #stage.wide .clock { flex:none; }
   #stage.wide .date .greet { display:none; }
-  #stage.wide #weather { flex:1; min-width:0; border-top:none; padding-top:6px; margin-left:20px; display:flex; flex-direction:column; align-items:flex-end; }
-  #stage.wide #weather .label { display:none; }
-  #stage.wide .wx-now { flex-direction:column; align-items:flex-end; }
-  #stage.wide .wx-now svg { width:96px; height:96px; margin:0 0 6px 0; }
-  #stage.wide .wx-temp { font-size:124px; }
-  #stage.wide .wx-info { margin-left:0; }
-  #stage.wide .wx-info .cond { font-size:38px; }
-  #stage.wide .wx-info .rng { font-size:32px; margin-top:6px; }
+  #stage.wide #weather { flex:1; min-width:0; margin-top:0; margin-left:14px; padding:8px 16px 8px; }
+  #stage.wide .wx-now { flex-wrap:wrap; justify-content:flex-end; }
+  #stage.wide .wx-now svg { width:60px; height:60px; margin:0 6px 0 0; }
+  #stage.wide .wx-temp { font-size:118px; }
+  #stage.wide .wx-info { flex-basis:100%; margin-left:0; margin-top:2px; }
+  #stage.wide .wx-info .cond { font-size:38px; line-height:1.25; }
+  #stage.wide .wx-info .rng { font-size:32px; margin-top:2px; line-height:1.3; }
   #stage.wide .wx-info .rng .pop { display:block; }
   #stage.wide .wx-info .rng .pop i { display:none; }
+  #stage.tall #weather { margin-top:10px; }
 
-  /* 高度不够时按顺序收起次要内容 */
-  #stage.s1 footer { display:none; }
+  /* 高度不够时按顺序收起次要内容（逐级叠加） */
+  #stage.s1 footer, #stage.s1 .scale { display:none; }
   #stage.s2 .todo li:nth-child(4), #stage.s2 .rem li:nth-child(4) { display:none; }
   #stage.s3 .quote .qc { display:none; }
   #stage.s4 .ev.past { display:none; }
   /* 旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠：禁止收缩，溢出交给 fit() 检测 */
-  #stage > *, .top > *, .clock > *, #weather > *, .wx-now > * { flex-shrink:0; }
-  #stage > #schedule { flex:1 0 auto; }
+  #stage > *, .top > *, .clock > *, #weather > * { flex-shrink:0; }
 </style>
 </head>
 <body>
+<div id="bg">
+  <svg viewBox="0 0 1080 1440" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#4FD1FF">
+      <circle cx="1010" cy="1330" r="640" stroke-opacity=".10" stroke-width="20" stroke-dasharray="2 24"/>
+      <circle cx="1010" cy="1330" r="604" stroke-opacity=".14" stroke-width="2"/>
+      <circle cx="1010" cy="1330" r="520" stroke-opacity=".08" stroke-width="1.5"/>
+      <circle cx="60" cy="-60" r="470" stroke-opacity=".09" stroke-width="16" stroke-dasharray="2 20"/>
+      <circle cx="60" cy="-60" r="440" stroke-opacity=".12" stroke-width="2"/>
+      <circle cx="1010" cy="1330" r="640" stroke-opacity=".28" stroke-width="5" stroke-dasharray="820 3200" transform="rotate(-172 1010 1330)"/>
+    </g>
+  </svg>
+</div>
+
 <div id="stage">
   <div class="top">
     <div class="clock">
       <div class="time" id="time">--<span class="colon">:</span>--</div>
       <div class="date"><span id="date">-</span><span class="wk" id="wk">-</span><span class="greet" id="greet"></span></div>
+      <div class="scale"><i id="dayfill"></i></div>
     </div>
-    <section id="weather">
+    <section id="weather" class="panel">
       <h2 class="label" id="wxLabel">天気</h2>
       <div class="wx-now">
         <div id="wxIcon"></div>
@@ -144,18 +180,18 @@
     </section>
   </div>
 
-  <section class="hourly"><div class="hrs" id="hrs"></div></section>
+  <section class="hourly panel"><div class="hrs" id="hrs"></div></section>
 
-  <section id="schedule"><h2 class="label">今日の予定</h2><div id="events"></div></section>
+  <section id="schedule" class="panel"><h2 class="label">今日の予定</h2><div id="events"></div></section>
 
   <div class="duo">
-    <section><h2 class="label">ToDo</h2><ul class="todo" id="todo"></ul></section>
-    <section><h2 class="label">家族リマインダー</h2><ul class="rem" id="rem"></ul></section>
+    <section class="panel"><h2 class="label">ToDo</h2><ul class="todo" id="todo"></ul></section>
+    <section class="panel"><h2 class="label">家族リマインダー</h2><ul class="rem" id="rem"></ul></section>
   </div>
 
-  <section class="quote"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
+  <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.5</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.6</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -166,7 +202,7 @@
    ============================================================ */
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
-  font: "zen",                              // 字体方案：zen / rounded / mincho / noto（也可在网址后加 ?font=rounded 试看）
+  font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
   dataUrl: "data.json",
   sheets: { events: "", todos: "", reminders: "" },
   refreshMin: 5,
@@ -175,22 +211,22 @@ var CONFIG = {
 
 /* ---------- 字体方案 ---------- */
 var FONTS = {
+  rounded: { css:"M+PLUS+Rounded+1c:wght@300;400;500",   fam:'"M PLUS Rounded 1c"',   wt:300, base:true },
   zen:     { css:"Zen+Kaku+Gothic+New:wght@300;400;500", fam:'"Zen Kaku Gothic New"', wt:300 },
-  rounded: { css:"M+PLUS+Rounded+1c:wght@300;400;500",   fam:'"M PLUS Rounded 1c"',   wt:300 },
   mincho:  { css:"Shippori+Mincho:wght@400;500;600",     fam:'"Shippori Mincho"',     wt:400 },
   noto:    { css:"Jost:wght@200;300;400;500&family=Noto+Sans+JP:wght@300;400;500", fam:'"Noto Sans JP"', num:'"Jost"', wt:200 }
 };
 (function () {
-  var m = location.search.match(/[?&]font=(\w+)/), key = (m && FONTS[m[1]]) ? m[1] : CONFIG.font, f = FONTS[key] || FONTS.zen;
-  if (key !== "zen") {
+  var m = location.search.match(/[?&]font=(\w+)/), key = (m && FONTS[m[1]]) ? m[1] : CONFIG.font, f = FONTS[key] || FONTS.rounded;
+  if (!f.base) {
     var l = document.createElement("link"); l.rel = "stylesheet";
     l.href = "https://fonts.googleapis.com/css2?family=" + f.css + "&display=swap"; document.head.appendChild(l);
+    var tail = ',"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif', st = document.documentElement.style;
+    st.setProperty("--f-txt", f.fam + tail);
+    st.setProperty("--f-num", (f.num || f.fam) + tail);
+    st.setProperty("--w-time", f.wt);
+    if (key === "mincho") st.setProperty("--f-quote", f.fam + ',"Hiragino Mincho ProN","Yu Mincho",serif');
   }
-  var tail = ',"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif', st = document.documentElement.style;
-  st.setProperty("--f-txt", f.fam + tail);
-  st.setProperty("--f-num", (f.num || f.fam) + tail);
-  st.setProperty("--w-time", f.wt);
-  if (key === "mincho") st.setProperty("--f-quote", f.fam + ',"Hiragino Mincho ProN","Yu Mincho",serif');
 })();
 
 /* ---------- 今日の名言（日付から自動で1つ選ぶ。data.json の quote で上書き可） ---------- */
@@ -300,7 +336,7 @@ function shrinkTo(el, base, max) {
   if (el.className.indexOf("date") < 0 && el.id !== "time") return;
   el.style.fontSize = "";
   if (stage.className.indexOf("wide") < 0) return;
-  var w = el.id === "time" ? el.scrollWidth : $("date").offsetWidth + $("wk").offsetWidth + 24;
+  var w = el.id === "time" ? el.scrollWidth : $("date").offsetWidth + $("wk").offsetWidth + 22;
   if (w > max) el.style.fontSize = Math.floor(base * max / w) + "px";
 }
 
@@ -314,7 +350,7 @@ function fit() {
   stage.style.webkitTransform = v; stage.style.transform = v;
   var mode = H >= 1780 ? "tall" : "wide", lv = ["", "s1", "s2", "s3", "s4"];
   stage.className = mode;
-  shrinkTo($("time"), 280, 640); shrinkTo($("date").parentNode, 76, 640);      // 时钟/日期太宽（字体不同）时自动缩小，给右侧天气留位置
+  shrinkTo($("time"), 280, 640); shrinkTo($("date").parentNode, 72, 640);      // 时钟/日期太宽时自动缩小，给右侧天气留位置
   for (var i = 0; i < lv.length; i++) {          // 放不下就依次收起：页脚 → 第4条待办 → 名言出处 → 已过日程
     stage.className = mode + (i ? " " + lv.slice(1, i + 1).join(" ") : "");
     if (stage.scrollHeight <= H + 1) break;
@@ -368,8 +404,10 @@ function renderWeather() {
   $("wxCond").textContent = w[1];
   $("wxRng").innerHTML = weather.hi + "° / " + weather.lo + "°<span class=\"pop\"><i>  ·  </i>降水 " + weather.pop + "%</span>";
   $("hrs").innerHTML = weather.hours.map(function (x) {
+    var hi = x[3] >= 50;
     return '<div class="hr"><span class="h">' + (x[0] === 0 ? "現在" : pad((h0 + x[0]) % 24) + "時") + '</span><span class="mid"><span class="ic">' + icon(wmo(x[2])[0]) +
-           '</span><span class="t">' + x[1] + '°</span></span><span class="p' + (x[3] >= 50 ? " hi" : "") + '">' + DROP + x[3] + '%</span></div>';
+           '</span><span class="t">' + x[1] + '°</span></span><span class="p' + (hi ? " hi" : "") + '">' + DROP + x[3] + '%</span>' +
+           '<span class="bar' + (hi ? " hi" : "") + '"><i style="width:' + Math.max(4, x[3]) + '%"></i></span></div>';
   }).join("");
 }
 
@@ -489,17 +527,18 @@ function loadData() {
   });
 }
 function renderFooter() {
-  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.5";
+  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v0.6";
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
-/* ---------- 時計 / 日付 / 夜間減光 / 毎日3時に再読込 ---------- */
+/* ---------- 時計 / 日付 / 一日メーター / 夜間減光 / 毎日3時に再読込 ---------- */
 function tick() {
   var n = new Date(), h = n.getHours();
   $("time").innerHTML = pad(h) + '<span class="colon">:</span>' + pad(n.getMinutes());
   $("date").textContent = (n.getMonth() + 1) + "月" + n.getDate() + "日";
   $("wk").textContent = WK[n.getDay()];
   $("greet").textContent = h < 5 ? "夜更けです" : h < 11 ? "おはよう" : h < 18 ? "こんにちは" : "こんばんは";
+  $("dayfill").style.width = ((h * 60 + n.getMinutes()) / 14.4).toFixed(1) + "%";
   var night = h >= CONFIG.nightFrom || h < CONFIG.nightTo;
   $("dim").className = night ? "on" : "";
   if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 2) location.reload();
