@@ -87,7 +87,7 @@
 
   footer { margin-top:20px; font-size:26px; color:var(--ink-3); display:flex; justify-content:space-between; }
 
-  /* ===== v0.4：按屏幕实际比例铺满宽度。wide=iPad(4:3)等，tall=9:16 手机 ===== */
+  /* ===== v0.4.1：按屏幕实际比例铺满宽度。wide=iPad(4:3)等，tall=9:16 手机 ===== */
   .top { display:flex; flex-direction:column; }
   .time { white-space:nowrap; }
   .date { font-size:72px; }
@@ -117,6 +117,10 @@
   #stage.s1 .brief { display:none; }
   #stage.s2 .todo li:nth-child(4), #stage.s2 .rem li:nth-child(4) { display:none; }
   #stage.s3 .ev.past { display:none; }
+  /* v0.4.1：旧 Safari(iOS 12) 高度不足时会把 flex 子元素压扁导致重叠，且检测不到溢出。
+     禁止收缩，让溢出被 fit() 正确检测到，再由脚本收起次要内容 */
+  #stage > *, .top > *, .clock > *, #weather > *, .wx-now > * { flex-shrink:0; }
+  #stage > #schedule { flex:1 0 auto; }
 </style>
 </head>
 <body>
@@ -148,7 +152,7 @@
     <section><h2 class="label">家族リマインダー</h2><ul class="rem" id="rem"></ul></section>
   </div>
 
-  <footer><span id="ftL">v0.4</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.4.1</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -384,7 +388,7 @@ function loadData() {
   });
 }
 function renderFooter() {
-  $("ftL").textContent = "v0.4 · 天気" + (weather.live ? "ライブ" : "サンプル");
+  $("ftL").textContent = "v0.4.1 · 天気" + (weather.live ? "ライブ" : "サンプル");
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
