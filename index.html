@@ -155,8 +155,8 @@
 
   /* 高度不够时按顺序收起次要内容（逐级叠加） */
   #stage.s1 footer, #stage.s1 .scale { display:none; }
-  #stage.s2 .todo li:nth-child(4), #stage.s2 .rem li:nth-child(4) { display:none; }
-  #stage.s3 .quote .qc { display:none; }
+  #stage.s2 .todo li:nth-child(n+5), #stage.s2 .rem li:nth-child(n+5) { display:none; }      /* ToDo は最大6行 → まず4行に */
+  #stage.s3 .quote .qc, #stage.s3 .todo li:nth-child(n+4), #stage.s3 .rem li:nth-child(n+4) { display:none; }
   #stage.s4 .ev.past { display:none; }
   #stage.s5 .quote { display:none; }
   #stage.s6 .ev { min-height:50px; }
@@ -246,7 +246,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.7.2</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.3</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -255,7 +255,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.7.2";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.3";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -575,7 +575,7 @@ function renderTodo() {
     return { x:x, i:i, d:s.d, g:(s.d && !fresh) ? 1 : 0 };
   });
   items.sort(function (a, b) { return a.g - b.g || a.i - b.i; });          // 未完了・直近完了 → 以前の完了済み
-  items = items.slice(0, 4);
+  items = items.slice(0, 6);                                              // 最大6行（画面が狭いときは fit() が段階的に4行→3行へ減らす）
   $("todo").innerHTML = items.length ? items.map(function (o) {
     return '<li class="' + (o.d ? "done" : "") + '" data-i="' + o.i + '"><span class="box"></span><span>' + o.x.t + '</span></li>';
   }).join("") : '<li style="color:var(--ink-3)">ToDoはありません</li>';
