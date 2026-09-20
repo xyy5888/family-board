@@ -246,7 +246,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.7.3</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.4</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -255,7 +255,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.7.3";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.4";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -569,12 +569,12 @@ function todoState(x) {                            // この iPad で24時間以
   return { d: x.done ? 1 : 0, t: 0 };
 }
 function renderTodo() {
-  var now = new Date().getTime();
+  var today = new Date().toDateString();
   var items = state.todos.map(function (x, i) {
-    var s = todoState(x), fresh = s.d && s.t && now - s.t < 30 * 60000;   // 完了にしたばかりの項目は30分間その場に残す（消えない）
-    return { x:x, i:i, d:s.d, g:(s.d && !fresh) ? 1 : 0 };
-  });
-  items.sort(function (a, b) { return a.g - b.g || a.i - b.i; });          // 未完了・直近完了 → 以前の完了済み
+    var s = todoState(x), ticked = s.d && s.t && new Date(s.t).toDateString() === today;   // この iPad で「今日」完了にした項目
+    return { x:x, i:i, d:s.d, show: !s.d || ticked };                     // シートで完了(Y)済みの古い項目は表示しない。今日タップした分は残す（消えない）
+  }).filter(function (o) { return o.show; });
+  items.sort(function (a, b) { return a.d - b.d || b.i - a.i; });          // 未完了が上 → 今日完了。どちらもシートの下の行（新しい）ほど上
   items = items.slice(0, 6);                                              // 最大6行（画面が狭いときは fit() が段階的に4行→3行へ減らす）
   $("todo").innerHTML = items.length ? items.map(function (o) {
     return '<li class="' + (o.d ? "done" : "") + '" data-i="' + o.i + '"><span class="box"></span><span>' + o.x.t + '</span></li>';
