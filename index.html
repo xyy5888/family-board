@@ -246,7 +246,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.7.1</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.2</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -255,7 +255,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.7.1";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.2";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -266,18 +266,29 @@ var CONFIG = {
   nightFrom: 22, nightTo: 6
 };
 
-/* ---------- テンプレート選択：URL(?theme=) > この iPad で切替えた値 > data.json > CONFIG ---------- */
+/* ---------- テンプレート選択：この端末で3回タップして選んだ値 > URL(?theme=)（ホーム画面アプリでは無視） > data.json > CONFIG ---------- */
 var THEMES = ["blue", "amber", "gold"], MODES = ["auto", "blue", "amber", "gold"], dataTheme = null, themeOverride = null, showInfo = /[?&]info\b/.test(location.search);
 var THEME_KEY = "family-board-theme2", MODE_NAME = { auto: "自動（昼＝シャンパンゴールド ／ 夜＝ブルー）", blue: "ブルー（冷光）", amber: "アンバー（暖光）", gold: "シャンパンゴールド（暖光）" };
 function autoTheme() { var h = new Date().getHours(); return h >= 6 && h < 18 ? "gold" : "blue"; }     // 6:00-18:00 香槟金 / 18:00-6:00 仪表蓝
+var modeSrc = "";                                 // 現在のモードの出どころ（tap=3回タップで選択 / url / data / default）
 function chosenMode() {
-  var m = location.search.match(/[?&]theme=(\w+)/), t = themeOverride || (m ? m[1] : null);
-  if (!t) { try { t = localStorage.getItem(THEME_KEY); } catch (e) {} }
-  if (!t) t = dataTheme || CONFIG.theme;
-  return MODES.indexOf(t) >= 0 ? t : "auto";
+  // 優先順：3回タップで選んだ値 > URL(?theme=) > data.json > CONFIG。
+  // ホーム画面アプリ(standalone)では URL の ?theme= を無視する（アイコンの登録URLに残っていると「自動」が効かなくなるため）
+  var m = location.search.match(/[?&]theme=(\w+)/), u = (m && !navigator.standalone) ? m[1] : null, st = null, t, s;
+  try { st = localStorage.getItem(THEME_KEY); } catch (e) {}
+  if (themeOverride) { t = themeOverride; s = "tap"; }
+  else if (st) { t = st; s = "tap"; }
+  else if (u) { t = u; s = "url"; }
+  else if (dataTheme) { t = dataTheme; s = "data"; }
+  else { t = CONFIG.theme; s = "default"; }
+  if (MODES.indexOf(t) < 0) { t = "auto"; s = "default"; }
+  modeSrc = s; return t;
 }
 function chosenTheme() { var m = chosenMode(); return m === "auto" ? autoTheme() : m; }
-function applyTheme() { document.documentElement.setAttribute("data-theme", chosenTheme()); }
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", chosenTheme());
+  try { renderFooter(); } catch (e) {}          // 下部の情報行に現在のテンプレートを表示（日付を3回タップで見える）
+}
 var toastT = 0;
 function toast(msg) {
   var el = document.getElementById("toast"); if (!el) return;
@@ -643,7 +654,8 @@ function loadData() {
   });
 }
 function renderFooter() {
-  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v" + APP_VERSION;
+  var m = chosenMode(), tn = m === "auto" ? "自動（今は" + chosenTheme() + "）" : m + "固定" + (modeSrc === "url" ? "（URL指定）" : "");
+  $("ftL").textContent = CONFIG.city + " · 天気" + (weather.live ? "ライブ" : "サンプル") + " · v" + APP_VERSION + " · " + tn;
   $("ftR").textContent = state.updated ? "データ " + state.updated + " 更新 · " + state.src : state.src;
 }
 
