@@ -249,7 +249,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qr" id="qRd"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.7.6</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.7</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -258,7 +258,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.7.6";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.7";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -636,9 +636,9 @@ function loadData() {
   }
   var p = getText(CONFIG.dataUrl).then(function (t) {
     var d = JSON.parse(t);
-    if (d.events) state.events = d.events;
-    if (d.todos) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
-    if (d.reminders) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
+    if (d.events && d.events.length) state.events = d.events;                 // 空配列(=シート運用時のプレースホルダ)なら既存の表示を消さない
+    if (d.todos && d.todos.length) state.todos = d.todos.map(function (x) { return typeof x === "string" ? { t:x } : x; });
+    if (d.reminders && d.reminders.length) state.reminders = d.reminders.map(function (x) { return { d:x.when || x.d, what:x.what }; });
     dataTheme = d.theme || null; applyTheme();
     if (d.sheets) for (var k in d.sheets) if (d.sheets[k]) CONFIG.sheets[k] = d.sheets[k];
     if (d.appVersion && d.appVersion !== APP_VERSION && !/[?&]v=/.test(location.search)) { location.replace(location.pathname + "?v=" + d.appVersion); return; }   // 新しい版が出たら自動更新
