@@ -249,7 +249,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qr" id="qRd"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.7.7</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.8</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -258,7 +258,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.7.7";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.8";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -402,13 +402,14 @@ var state = { events: [], todos: [], reminders: [], quote: null, src: "読み込
 /* ---------- 工具 ---------- */
 function $(id) { return document.getElementById(id); }
 function pad(n) { return (n < 10 ? "0" : "") + n; }
-function toMin(hhmm) { var p = String(hhmm).split(":"); return (+p[0]) * 60 + (+p[1] || 0); }
+function han(s) { return String(s).replace(/[０-９：－／]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }); }   // 全角数字/コロン/ハイフンをスマホIMEの誤変換対策で半角化
+function toMin(hhmm) { var p = han(hhmm).split(":"); var v = (+p[0]) * 60 + (+p[1] || 0); return isNaN(v) ? null : v; }
 function fmtMin(m) { return pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60); }
 var WK = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
 var WKS = ["日曜","月曜","火曜","水曜","木曜","金曜","土曜"];
 function todayStr() { var n = new Date(); return n.getFullYear() + "-" + pad(n.getMonth() + 1) + "-" + pad(n.getDate()); }
 function parseDate(s) {
-  var m = String(s || "").trim().match(/^(?:(\d{4})[-\/])?(\d{1,2})[-\/](\d{1,2})$/);
+  var m = han(String(s || "").trim()).match(/^(?:(\d{4})[-\/])?(\d{1,2})[-\/](\d{1,2})$/);
   if (!m) return null;
   return new Date(m[1] ? +m[1] : new Date().getFullYear(), +m[2] - 1, +m[3]);
 }
@@ -540,9 +541,12 @@ function todaysEvents() {
     if (!e.date) return true;
     var d = parseDate(e.date); return d && dayDiff(d) === 0;
   }).map(function (e) {
-    var s = toMin(e.s), en = e.e ? toMin(e.e) : s + 60;
+    var s = toMin(e.s);
+    if (s === null) return null;                          // 開始時刻が壊れている行は表示しようがないので除外
+    var en = e.e ? toMin(e.e) : null;
+    if (en === null) en = s + 60;                          // 終了が空、または全角崩れ等で読めない時刻は開始+1時間とみなす
     return { s:s, e:en, title:e.title, who:e.who || "" };
-  }).sort(function (a, b) { return a.s - b.s; });
+  }).filter(function (e) { return e; }).sort(function (a, b) { return a.s - b.s; });
 }
 function renderEvents() {
   var n = new Date(), now = n.getHours() * 60 + n.getMinutes();
