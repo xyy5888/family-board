@@ -224,7 +224,7 @@
   <div id="toast"></div>
   <div class="top">
     <div class="clock">
-      <div class="time" id="time">--<span class="colon">:</span>--</div>
+      <div class="time" id="time"><span id="tH">--</span><span class="colon" id="tC">:</span><span id="tM">--</span></div>
       <div class="date"><span id="date">-</span><span class="wk" id="wk">-</span><span class="hn" id="hn"></span><span class="greet" id="greet"></span></div>
       <div class="scale"><i id="dayfill"></i></div>
     </div>
@@ -249,7 +249,7 @@
 
   <section class="quote panel"><p class="q" id="qText"></p><p class="qr" id="qRd"></p><p class="qc" id="qCap"></p></section>
 
-  <footer><span id="ftL">v0.7.8</span><span id="ftR"></span></footer>
+  <footer><span id="ftL">v0.7.9</span><span id="ftR"></span></footer>
 </div>
 <div id="dim"></div>
 
@@ -258,7 +258,7 @@
    CONFIG —— 只需要改这里
    数据优先级：Google 表格（填了链接才启用）> data.json > 内置示例
    ============================================================ */
-var APP_VERSION = "0.7.8";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
+var APP_VERSION = "0.7.9";     // data.json の appVersion がこれと違えば、ページを自動で読み直す（iPad のキャッシュ対策）
 var CONFIG = {
   city: "稲城市", lat: 35.64, lon: 139.50,   // 東京都稲城市
   font: "rounded",                          // 字体方案：rounded（默认）/ zen / mincho / noto（也可在网址后加 ?font=zen 试看）
@@ -701,20 +701,25 @@ var TEST_TODAY = (location.search.match(/[?&]today=(\d{4})-(\d{1,2})-(\d{1,2})/)
 function nowDate() { return TEST_TODAY ? new Date(+TEST_TODAY[1], +TEST_TODAY[2] - 1, +TEST_TODAY[3], new Date().getHours(), new Date().getMinutes(), new Date().getSeconds()) : new Date(); }
 
 /* ---------- 時計 / 日付 / 一日メーター / 夜間減光 / 毎日3時に再読込 ---------- */
+function setTxt(el, v) { if (el.textContent !== v) el.textContent = v; }      // 変わったときだけ書き換える（毎秒の DOM 作り直しは旧 Safari で再描画のちらつき・欠けの原因になる）
+var colonOff = null;
 function tick() {
   var n = nowDate(), h = n.getHours();
-  $("time").innerHTML = pad(h) + '<span class="colon' + (n.getSeconds() % 2 ? " off" : "") + '">:</span>' + pad(n.getMinutes());
-  $("date").textContent = (n.getMonth() + 1) + "月" + n.getDate() + "日";
-  $("wk").textContent = WK[n.getDay()];
+  setTxt($("tH"), pad(h)); setTxt($("tM"), pad(n.getMinutes()));          // 時・分は変わった時だけ更新。コロンは要素を作り直さず class だけ切替（呼吸アニメが毎秒リセットされない）
+  var off = n.getSeconds() % 2 === 1;
+  if (off !== colonOff) { colonOff = off; $("tC").className = "colon" + (off ? " off" : ""); }
+  setTxt($("date"), (n.getMonth() + 1) + "月" + n.getDate() + "日");
+  setTxt($("wk"), WK[n.getDay()]);
   var hol = holidayName(n), row = $("date").parentNode, hcls = hol ? "date hol" : "date";
-  if ($("hn").textContent !== hol) $("hn").textContent = hol;
+  setTxt($("hn"), hol);
   if (row.className !== hcls) { row.className = hcls; setTimeout(fit, 0); }              // 祝日名の有無で幅が変わるので再フィット
   var th = chosenTheme();
   if (document.documentElement.getAttribute("data-theme") !== th) { applyTheme(); setTimeout(fit, 0); }   // 6時/18時で自動切替
-  $("greet").textContent = h < 5 ? "夜更けです" : h < 11 ? "おはよう" : h < 18 ? "こんにちは" : "こんばんは";
-  $("dayfill").style.width = ((h * 60 + n.getMinutes()) / 14.4).toFixed(1) + "%";
-  var night = !/[?&]dim=0/.test(location.search) && (h >= CONFIG.nightFrom || h < CONFIG.nightTo);
-  $("dim").className = night ? "on" : "";
+  setTxt($("greet"), h < 5 ? "夜更けです" : h < 11 ? "おはよう" : h < 18 ? "こんにちは" : "こんばんは");
+  var w = ((h * 60 + n.getMinutes()) / 14.4).toFixed(1) + "%";
+  if ($("dayfill").style.width !== w) $("dayfill").style.width = w;
+  var night = !/[?&]dim=0/.test(location.search) && (h >= CONFIG.nightFrom || h < CONFIG.nightTo), dc = night ? "on" : "";
+  if ($("dim").className !== dc) $("dim").className = dc;
   if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 2) location.reload();
 }
 
